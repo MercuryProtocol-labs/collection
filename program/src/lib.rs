@@ -7,4 +7,4 @@ pub mod error;
 pub mod utils;
 pub mod state;
 
-solana_program::declare_id!("3c2kEHfoM9QXPJZxLvYGBkk3jncvtas8AoHFyRThbJA6");
+solana_program::declare_id!("co111CrRL738X8TKrqmLcNBstgLFZjuMtZRBW2FGpbC");

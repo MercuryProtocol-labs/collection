@@ -1,17 +1,17 @@
 use solana_program_test::*;
 use collection::id;
 use collection::processor::process_instruction;
-use collection::instruction::{CollectionInstruction, CreateCollectionAccountArgs};
+use collection::instruction::{create_collection_account, CreateCollectionAccountArgs, include_token};
 use collection::state::CollectionAccountData;
+use collection::utils::get_index_account;
 use solana_sdk::{
     signature::{Keypair, Signer},
     transaction::Transaction,
-    instruction::{Instruction, AccountMeta},
-    sysvar::rent,
-    system_program,
     borsh::try_from_slice_unchecked,
 };
-use borsh::ser::BorshSerialize;
+mod helpers;
+use helpers::{create_mint, create_associated_account, mint_tokens};
+use spl_associated_token_account::get_associated_token_address;
 
 #[tokio::test]
 async fn test_create_collection_account() {
@@ -31,18 +31,9 @@ async fn test_create_collection_account() {
         banaer: Some("www.solana.com".to_string()),
         tags: Some(vec!["art".to_string(), "music".to_string()]),
     };
-    let instruction_data = CollectionInstruction::CreateCollectionAccount(args).try_to_vec().unwrap();
+    let ix = create_collection_account(program_id, collection_account, payer.pubkey(), args);
     let mut transaction = Transaction::new_with_payer(
-        &[Instruction::new_with_bytes(
-            program_id,
-            &instruction_data,
-            vec![
-                AccountMeta::new(collection_account, true),
-                AccountMeta::new(payer.pubkey(), true),
-                AccountMeta::new_readonly(rent::id(), false),
-                AccountMeta::new_readonly(system_program::id(), false),
-            ],
-        )],
+        &[ix],
         Some(&payer.pubkey()),
     );
     transaction.sign(&[&payer, &collection_keypair], recent_blockhash);
@@ -63,4 +54,62 @@ async fn test_create_collection_account() {
     assert_eq!(account_data.short_description, Some("www.solana.com".to_string()));
     assert_eq!(account_data.banaer, Some("www.solana.com".to_string()));
     assert_eq!(account_data.tags, Some(vec!["art".to_string(), "music".to_string()]));
+}
+
+#[tokio::test]
+async fn test_include_token() {
+    let program_id = id();
+    let program_test = ProgramTest::new("collection", program_id, processor!(process_instruction));
+    let mut context= program_test.start_with_context().await;
+    
+    let collection_keypair = Keypair::new();
+    let collection_account = collection_keypair.pubkey();
+    let args = CreateCollectionAccountArgs{
+        title: "test collection".to_string(),
+        symbol: "tc".to_string(),
+        description: "test collection description".to_string(),
+        icon_image: "https://www.google.com".to_string(),
+        header_image: Some("www.solana.com".to_string()),
+        short_description: Some("www.solana.com".to_string()),
+        banaer: Some("www.solana.com".to_string()),
+        tags: Some(vec!["art".to_string(), "music".to_string()]),
+    };
+    let ix = create_collection_account(program_id, collection_account, context.payer.pubkey(), args);
+    let mut transaction = Transaction::new_with_payer(
+        &[ix],
+        Some(&context.payer.pubkey()),
+    );
+    transaction.sign(&[&context.payer, &collection_keypair], context.last_blockhash);
+    context.banks_client.process_transaction(transaction).await.unwrap();
+
+    let mint_keypair = Keypair::new();
+    let payer_pubkey = context.payer.pubkey();
+    create_mint(
+        &mut context, 
+        &mint_keypair, 
+        &payer_pubkey,
+        0, 
+        Some(&payer_pubkey),
+    ).await.unwrap();
+    create_associated_account(&mut context, &payer_pubkey, &mint_keypair.pubkey()).await.unwrap();
+
+    let nft_ata = get_associated_token_address(&payer_pubkey, &mint_keypair.pubkey());
+    mint_tokens(&mut context, &mint_keypair.pubkey(), &nft_ata, 1, &payer_pubkey, None).await.unwrap();
+
+    let (index_account,_) = get_index_account(
+        &mint_keypair.pubkey(), 
+    );
+    let ix = include_token(
+        program_id,
+        collection_keypair.pubkey(),
+        mint_keypair.pubkey(),
+        payer_pubkey,
+        index_account,
+    );
+    let mut transaction = Transaction::new_with_payer(
+        &[ix],
+        Some(&context.payer.pubkey()),
+    );
+    transaction.sign(&[&context.payer, &collection_keypair], context.last_blockhash);
+    context.banks_client.process_transaction(transaction).await.unwrap();
 }

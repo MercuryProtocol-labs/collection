@@ -16,6 +16,34 @@ pub enum CollectionError {
     /// Already initialized
     #[error("Already initialized")]
     AlreadyInitialized,
+
+    /// Uninitialized
+    #[error("Uninitialized")]
+    Uninitialized,
+
+    /// Invalid owner
+    #[error("Invalid nft")]
+    InvalidNFT,
+
+    /// You must be the mint authority and signer on this transaction
+    #[error("You must be the mint authority and signer on this transaction")]
+    NotMintAuthority,
+
+    /// You must be the mint authority and signer on this transaction
+    #[error("You must be the collection authority and signer on this transaction")]
+    NotCollectionAuthority,
+
+    /// Invalid program id
+    #[error("Invalid program id")]
+    InvalidProgramId,
+
+    /// Invalid instruction arguments
+    #[error("Invalid instruction arguments")]
+    InvalidInstructionArguments,
+
+    /// Collection index account mismatch
+    #[error("Collection index account mismatch")]
+    CollectionIndexAccountMismatch,
 }
 
 impl PrintProgramError for CollectionError {

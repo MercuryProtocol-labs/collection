@@ -1,4 +1,8 @@
 use {
+    crate::{
+        state::PREFIX,
+        id,
+    },
     solana_program::{
         account_info::AccountInfo,
         entrypoint::ProgramResult,
@@ -86,4 +90,17 @@ pub fn create_or_allocate_account_raw<'a>(
     )?;
 
     Ok(())
+}
+
+pub fn get_index_account(
+    spl_token_mint_address: &Pubkey,
+) -> (Pubkey, u8) {
+    let program_id = id();
+    let seeds = &[
+        PREFIX.as_bytes(),
+        program_id.as_ref(),
+        spl_token_mint_address.as_ref(),
+    ];
+    let (collection_address, bump_seed) = Pubkey::find_program_address(seeds, &program_id);
+    (collection_address, bump_seed)
 }
