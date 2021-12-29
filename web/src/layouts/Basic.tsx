@@ -66,7 +66,7 @@ const Basic: FC = ({ children }) => {
       <WalletProvider wallets={wallets} autoConnect>
         <WalletModalProvider>
           <BasicLayout
-            title="McrCollection"
+            title="McrCollection (Devnet)"
             navTheme={theme}
             headerTheme={theme}
             theme={theme}
