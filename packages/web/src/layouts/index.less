@@ -1,0 +1,46 @@
+.header {
+  height: 68px;
+  //   width: 1080px;
+  padding: 0 24px;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  background: #000;
+}
+.menus {
+  a {
+    color: #fff;
+    padding: 6px 12px;
+    font-size: 18px;
+    line-height: 68px;
+    font-weight: bold;
+  }
+  .active {
+    color: #4e44ce;
+  }
+}
+.walletBtns {
+  margin-left: auto;
+}
+
+.links {
+  position: relative;
+  height: 100%;
+}
+.bottomLinks {
+  position: absolute;
+  bottom: 0;
+}
+
+.layoutContent {
+  :global {
+    .ant-layout {
+      background: #00152a;
+      color: #fff;
+    }
+    .wallet-adapter-button,
+    .wallet-adapter-button[disabled] {
+      background: transparent;
+    }
+  }
+}
