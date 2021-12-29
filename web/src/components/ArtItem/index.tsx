@@ -25,8 +25,6 @@ const ArtContent: FC<{ uri: string }> = ({ uri }) => {
 export default ({ nft }: { nft: CollectionIndexAccountData }) => {
   const { connection } = useConnection();
   const [art, setArt] = useState<any>(null);
-  console.log('art: ', art);
-  console.log('nft: ', new PublicKey(nft.mint).toString());
 
   useEffect(() => {
     async function query() {

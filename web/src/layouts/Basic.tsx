@@ -55,7 +55,6 @@ const Basic: FC = ({ children }) => {
 
   const theme = 'dark';
   const paths: { [key: string]: string } = {
-    '/dashboard': '2',
     '/collections': '3',
     '/create': '4',
   };
@@ -84,9 +83,6 @@ const Basic: FC = ({ children }) => {
                   <Menu theme={theme} defaultSelectedKeys={[defaultKey]} mode="inline">
                     <Menu.Item key="1" icon={<HomeOutlined />}>
                       <Link to="/">Home</Link>
-                    </Menu.Item>
-                    <Menu.Item key="2" icon={<PieChartOutlined />}>
-                      <Link to="/dashboard">Dashboard</Link>
                     </Menu.Item>
                     <Menu.Item key="3" icon={<ShoppingOutlined />}>
                       <Link to="/collections">Collections</Link>

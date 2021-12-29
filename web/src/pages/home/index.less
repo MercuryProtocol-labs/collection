@@ -1,0 +1,37 @@
+@import '~antd/es/style/themes/dark.less';
+
+.home {
+  text-align: center;
+}
+
+.homeItem {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  border-bottom: 1px solid @border-color-split;
+  color: #fff;
+
+  & > :nth-child(n) {
+    flex: 20%;
+    text-align: left;
+    margin: 10px 0px;
+    line-height: 50px;
+  }
+
+  & > :first-child {
+    flex: 80px;
+    text-align: left;
+  }
+}
+
+.homeItemHeader {
+  & > :first-child {
+  }
+}
+
+.iconImage {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background-color: #fff;
+}

@@ -15,6 +15,7 @@ export default () => {
   const { id } = useParams<{ id: string }>();
   const [collection, setCollection] = useState<(CollectionAccountData & { pubkey: PublicKey }) | null>(null);
   const [tokenAddress, setTokenAddress] = useState(''); // NFT mint address
+  const [hasAuthority, setHasAuthority] = useState(false);
 
   const [nfts, setNfts] = useState<any[]>([]);
 
@@ -23,16 +24,27 @@ export default () => {
     getNFTs();
   }, [id]);
 
+  useEffect(() => {
+    initAuthority();
+  }, [collection, wallet]);
+
   async function getCollectionAccountData() {
     const pubkey = new PublicKey(id);
     const account = await connection.getAccountInfo(pubkey);
     if (!account) return;
 
-    const parsedData = decodeCollectionAccountData({
-      pubkey,
-      account,
-    });
+    const parsedData = decodeCollectionAccountData({ pubkey, account });
+
     setCollection(parsedData);
+  }
+
+  function initAuthority() {
+    if (!collection || !wallet.publicKey) return;
+
+    const authorityAddr = new PublicKey(collection.authority).toString().toLocaleLowerCase();
+    const walletAddr = wallet.publicKey?.toString().toLocaleLowerCase();
+
+    setHasAuthority(authorityAddr === walletAddr);
   }
 
   async function addNFT() {
@@ -61,19 +73,19 @@ export default () => {
     <div className={styles.content}>
       {!!collection && <CollectionItem data={collection} block></CollectionItem>}
 
-      <div style={{ marginTop: '24px' }}>
-        <Input size="large" placeholder="Token address" onChange={(e) => setTokenAddress(e.target.value)} />
-        <Button size="large" type="primary" block onClick={addNFT} style={{ marginTop: '24px' }}>
-          Add Token To The Collection
-        </Button>
-      </div>
+      {hasAuthority && (
+        <div style={{ marginTop: '24px' }}>
+          <Input size="large" placeholder="Token address" onChange={(e) => setTokenAddress(e.target.value)} />
+          <Button size="large" type="primary" block onClick={addNFT} style={{ marginTop: '24px' }}>
+            Add Token To The Collection
+          </Button>
+        </div>
+      )}
 
       <div className={styles.wrapNfts}>
         {nfts.map((nft) => (
           <NftItem key={new PublicKey(nft.mint).toString()} nft={nft} />
         ))}
-
-        {!nfts.length && <Empty />}
       </div>
     </div>
   );

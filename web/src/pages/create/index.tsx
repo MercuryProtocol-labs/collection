@@ -4,6 +4,7 @@ import { useHistory } from 'umi';
 import { CreateCollectionArgs } from '@/models';
 import { createCollection } from '@/actions';
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
+import styles from './index.less';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -55,11 +56,9 @@ export default () => {
   }
 
   return (
-    <div>
-      <PageHeader onBack={() => history.go(-1)} title="Create" subTitle="Create a collection" />
-
+    <div className={styles.createPage}>
       <div style={{ width: '732px', margin: '0 auto' }}>
-        <Card style={{ width: '100%' }}>
+        <div className={styles.block}>
           <Space direction="vertical" size={48} style={{ width: '100%' }}>
             <div>
               <Title level={3}>
@@ -96,9 +95,9 @@ export default () => {
               />
             </div>
           </Space>
-        </Card>
+        </div>
 
-        <Card style={{ marginTop: '48px' }}>
+        <div className={styles.block}>
           <Space direction="vertical" size={48} style={{ width: '100%' }}>
             <div>
               <Title level={3}>
@@ -130,9 +129,9 @@ export default () => {
               />
             </div>
           </Space>
-        </Card>
+        </div>
 
-        <Card style={{ marginTop: '48px' }}>
+        <div className={styles.block}>
           <Space direction="vertical" size={48} style={{ width: '100%' }}>
             <div>
               <Title level={3}>
@@ -159,7 +158,7 @@ export default () => {
               </Select>
             </div>
           </Space>
-        </Card>
+        </div>
 
         <Button
           style={{ marginTop: '48px', marginBottom: '48px' }}
