@@ -9,10 +9,22 @@ import {
   getSolletExtensionWallet,
   getSolletWallet,
 } from '@solana/wallet-adapter-wallets';
-import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
+import { WalletModalProvider, WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { clusterApiUrl } from '@solana/web3.js';
-import { Space, Layout } from 'antd';
+import { Space, Layout, Menu } from 'antd';
 import Header from '@/layouts/Header';
+import BasicLayout from '@ant-design/pro-layout';
+import { Link } from 'umi';
+import {
+  PieChartOutlined,
+  GithubOutlined,
+  BankOutlined,
+  LogoutOutlined,
+  ShoppingOutlined,
+  HomeOutlined,
+  ForkOutlined,
+} from '@ant-design/icons';
+
 import styles from './index.less';
 require('@solana/wallet-adapter-react-ui/styles.css');
 
@@ -40,13 +52,84 @@ const Basic: FC = ({ children }) => {
     ],
     [network],
   );
+
+  const theme = 'dark';
+  const paths: { [key: string]: string } = {
+    '/dashboard': '2',
+    '/collections': '3',
+    '/create': '4',
+  };
+  const current = [...Object.keys(paths)].find((key) => location.pathname.startsWith(key)) || '';
+  const defaultKey = paths[current] || '1';
+
   return (
     <ConnectionProvider endpoint={endpoint}>
       <WalletProvider wallets={wallets} autoConnect>
         <WalletModalProvider>
-          <Header></Header>
-
-          <div style={{ width: '1080px', margin: '0 auto' }}>{children}</div>
+          <BasicLayout
+            title="McrCollection"
+            navTheme={theme}
+            headerTheme={theme}
+            theme={theme}
+            layout="mix"
+            fixSiderbar={true}
+            primaryColor="#d83aeb"
+            logo={<div className="App-logo" />}
+            rightContentRender={() => <WalletMultiButton />}
+            links={[]}
+            className={styles.layoutContent}
+            menuContentRender={() => {
+              return (
+                <div className={styles.links}>
+                  <Menu theme={theme} defaultSelectedKeys={[defaultKey]} mode="inline">
+                    <Menu.Item key="1" icon={<HomeOutlined />}>
+                      <Link to="/">Home</Link>
+                    </Menu.Item>
+                    <Menu.Item key="2" icon={<PieChartOutlined />}>
+                      <Link to="/dashboard">Dashboard</Link>
+                    </Menu.Item>
+                    <Menu.Item key="3" icon={<ShoppingOutlined />}>
+                      <Link to="/collections">Collections</Link>
+                    </Menu.Item>
+                    <Menu.Item key="4" icon={<LogoutOutlined />}>
+                      <Link to="/create">Create</Link>
+                    </Menu.Item>
+                  </Menu>
+                  <Menu
+                    theme={theme}
+                    defaultSelectedKeys={[defaultKey]}
+                    selectable={false}
+                    mode="inline"
+                    className={styles.bottomLinks}
+                  >
+                    <Menu.Item key="16" icon={<ForkOutlined />}>
+                      <a
+                        title="Fork"
+                        href="https://github.com/MercuryProtocol-labs/collection/fork"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Fork
+                      </a>
+                    </Menu.Item>
+                    ,
+                    <Menu.Item key="15" icon={<GithubOutlined />}>
+                      <a
+                        title="Gtihub"
+                        href="https://github.com/MercuryProtocol-labs/collection/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        Github
+                      </a>
+                    </Menu.Item>
+                  </Menu>
+                </div>
+              );
+            }}
+          >
+            {children}
+          </BasicLayout>
         </WalletModalProvider>
       </WalletProvider>
     </ConnectionProvider>

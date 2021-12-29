@@ -51,7 +51,7 @@ export class CollectionAccountData {
   icon_image: string;
   supply: BN;
   stars: BN;
-  authority: number;
+  authority: Uint8Array;
   header_image?: string;
   short_description?: string;
   banaer?: string;
@@ -65,7 +65,7 @@ export class CollectionAccountData {
     icon_image: string;
     supply: BN;
     stars: BN;
-    authority: number;
+    authority: Uint8Array;
     header_image?: string;
     short_description?: string;
     banaer?: string;

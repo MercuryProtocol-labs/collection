@@ -59,28 +59,22 @@ export default () => {
 
   return (
     <div className={styles.content}>
-      <PageHeader onBack={() => history.go(-1)} title="Collection" subTitle="add token to the collection" />
+      {!!collection && <CollectionItem data={collection} block></CollectionItem>}
 
-      {!!collection && (
-        <div style={{ padding: '20px' }}>
-          <CollectionItem data={collection} hideView={true}></CollectionItem>
-        </div>
-      )}
-
-      <Card>
+      <div style={{ marginTop: '24px' }}>
         <Input size="large" placeholder="Token address" onChange={(e) => setTokenAddress(e.target.value)} />
         <Button size="large" type="primary" block onClick={addNFT} style={{ marginTop: '24px' }}>
           Add Token To The Collection
         </Button>
-      </Card>
+      </div>
 
-      <Card style={{ marginTop: '24px' }} title={`NFTs: ${nfts.length}`}>
+      <div className={styles.wrapNfts}>
         {nfts.map((nft) => (
           <NftItem key={new PublicKey(nft.mint).toString()} nft={nft} />
         ))}
 
         {!nfts.length && <Empty />}
-      </Card>
+      </div>
     </div>
   );
 };

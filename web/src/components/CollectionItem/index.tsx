@@ -1,39 +1,61 @@
-import { Space, Button } from 'antd';
+import { Space, Button, Tag } from 'antd';
 import { Link, useHistory } from 'umi';
 import { PublicKey } from '@solana/web3.js';
 import { CollectionAccountData } from '@/models';
+import { shortAddress } from '@/utils';
+import classnames from 'classnames';
 import styles from './index.less';
 
-export default ({ data, hideView }: { data: CollectionAccountData & { pubkey: PublicKey }; hideView?: boolean }) => {
-  const history = useHistory();
+export default ({ data, block }: { data: CollectionAccountData & { pubkey: PublicKey }; block?: boolean }) => {
+  const { title, symbol, supply, description, tags, authority, pubkey } = data;
+
+  function renderImage() {
+    if (block && data.banaer) {
+      return <img src={data.banaer} />;
+    }
+    if (!block && data.header_image) {
+      return <img src={data.header_image} />;
+    }
+    return null;
+  }
+
   return (
-    <div className={styles.content}>
-      <Space>
-        <div className={styles.imageItem}>
-          <span>banner</span> <img src={data.banaer} style={{ width: '100px' }} />
-        </div>
-        <div className={styles.imageItem}>
-          <span>header_image:</span> <img src={data.header_image} style={{ width: '100px' }} />
-        </div>
-        <div className={styles.imageItem}>
-          <span>icon_image:</span> <img src={data.icon_image} style={{ width: '100px' }} />
-        </div>
-      </Space>
+    <div className={classnames(styles.collectionItem, { [styles.collectionItemBlock]: block })}>
+      <div className={styles.images}>
+        <Link to={`/collection/${pubkey.toString()}`}>
+          <div className={styles.headerImage}>{renderImage()}</div>
 
-      <div>title: {data.title}</div>
-      <div>symbol: {data.symbol}</div>
-      <div>account_type: {data.account_type.type}</div>
-      <div>supply: {data.supply.toNumber()}</div>
-      <div>description: {data.description}</div>
-      <div>short_description: {data.short_description}</div>
-      <div>tags: {data.tags?.join(', ')}</div>
-      <div>authority: {new PublicKey(data.authority).toString()}</div>
+          <img src={data.icon_image} className={styles.iconImage} />
+        </Link>
+      </div>
 
-      {!hideView && (
-        <Button type="primary" block size="large" onClick={() => history.push(`/collection/${data.pubkey.toString()}`)}>
-          View
-        </Button>
-      )}
+      <div className={styles.descriptions}>
+        <span className={styles.title}>{title}</span>
+        <span className={styles.description}>{description}</span>
+      </div>
+
+      <div className={styles.infos}>
+        <span style={{ display: 'flex' }}>
+          <span>symbol: {symbol}</span>
+          <span style={{ marginLeft: 'auto', textAlign: 'right' }}>supply: {supply.toNumber()}</span>
+        </span>
+
+        <span>
+          authority:{' '}
+          <a
+            href={`https://explorer.solana.com/address/${new PublicKey(authority).toString()}?cluster=devnet`}
+            target="_blank"
+          >
+            {shortAddress(new PublicKey(authority))}
+          </a>
+        </span>
+        <span>
+          tags:{' '}
+          {tags?.map((tag) => (
+            <span key={tag}>{tag} </span>
+          ))}
+        </span>
+      </div>
     </div>
   );
 };
