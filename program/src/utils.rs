@@ -104,3 +104,15 @@ pub fn get_index_account(
     let (collection_address, bump_seed) = Pubkey::find_program_address(seeds, &program_id);
     (collection_address, bump_seed)
 }
+
+pub fn get_treasury_account() -> (Pubkey, u8) {
+    const TREASURY: &str = "treasury";
+    let program_id = id();
+    let seeds = &[
+        PREFIX.as_bytes(),
+        TREASURY.as_bytes(),
+        program_id.as_ref(),
+    ];
+    let (treasury_address, bump_seed) = Pubkey::find_program_address(seeds, &program_id);
+    (treasury_address, bump_seed)
+}

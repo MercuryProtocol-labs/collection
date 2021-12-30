@@ -44,6 +44,14 @@ pub enum CollectionError {
     /// Collection index account mismatch
     #[error("Collection index account mismatch")]
     CollectionIndexAccountMismatch,
+
+    /// Invalid treasury account
+    #[error("Invalid treasury account")]
+    InvalidTreasuryAccount,
+
+    /// Invalid account type
+    #[error("Invalid account type")]
+    InvalidAccountType,
 }
 
 impl PrintProgramError for CollectionError {

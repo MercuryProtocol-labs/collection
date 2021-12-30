@@ -1,16 +1,19 @@
 use {
     crate::{
         instruction::{CollectionInstruction, CreateCollectionAccountArgs},
-        utils::{create_new_account, create_or_allocate_account_raw, get_index_account},
+        utils::{create_new_account, create_or_allocate_account_raw, get_index_account, get_treasury_account},
         state::{PREFIX, AccountType, CollectionAccountData, CollectionIndexAccountData},
         error::CollectionError,
         check_id,
     },
     solana_program::{
         account_info::{AccountInfo, next_account_info},
+        system_instruction::transfer,
         entrypoint::ProgramResult, 
         pubkey::Pubkey,
         program_pack::Pack,
+        native_token::sol_to_lamports,
+        program::invoke,
         msg,
     },
     borsh::{BorshDeserialize, BorshSerialize},
@@ -30,6 +33,26 @@ pub fn process_instruction(
         CollectionInstruction::IncludeToken => {
             msg!("Instruction: Include Token");
             process_create_include_token(program_id, accounts)
+        },
+        CollectionInstruction::LightUpStarsOnce => {
+            msg!("Instruction: Light Up Stars Once");
+            process_light_up_stars_once(program_id, accounts)
+        },
+        CollectionInstruction::LightUpStarsThousand => {
+            msg!("Instruction: Light Up Stars One Thousand");
+            process_light_up_stars_thousand(program_id, accounts)
+        },
+        CollectionInstruction::LightUpStarsHundred => {
+            msg!("Instruction: Light Up Stars One Hundred");
+            process_light_up_stars_hundred(program_id, accounts)
+        },
+        CollectionInstruction::CloseAccount(account_type) => {
+            msg!("Instruction: Close Account");
+            process_close_account(program_id, accounts, account_type)
+        },
+        CollectionInstruction::Withdraw => {
+            msg!("Instruction: Withdraw");
+            process_withdraw(program_id, accounts)
         }
     }
 }
@@ -57,7 +80,7 @@ pub fn process_create_collection_account(
         authority: *form_account_info.key,
         header_image: args.header_image.clone(),
         short_description: args.short_description.clone(),
-        banaer: args.banaer.clone(),
+        banner: args.banner.clone(),
         tags: args.tags.clone(),
     };
     let mut data: Vec<u8> = Vec::new();
@@ -132,6 +155,144 @@ pub fn process_create_include_token(
     Ok(())
 }
 
+pub fn process_light_up_stars_once(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo],
+) -> ProgramResult {
+    assert_program_id(program_id)?;
+    let account_info_iter = &mut accounts.iter();
+    let collection_account_info = next_account_info(account_info_iter)?;
+    let mut collection_account_data = CollectionAccountData::try_from_slice_unchecked(
+        &collection_account_info.data.borrow_mut())?;
+    if !collection_account_data.is_initialized() {
+        return Err(CollectionError::Uninitialized.into());
+    }
+    collection_account_data.stars += 1;
+    collection_account_data.serialize(&mut *collection_account_info.data.borrow_mut())?;
+    Ok(())
+}
+
+pub fn process_light_up_stars_hundred(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo],
+) -> ProgramResult {
+    assert_program_id(program_id)?;
+    let account_info_iter = &mut accounts.iter();
+    let collection_account_info = next_account_info(account_info_iter)?;
+    let source_account_info = next_account_info(account_info_iter)?;
+    let destination_account_info = next_account_info(account_info_iter)?;
+
+    assert_treasury_account(destination_account_info)?;
+    let lamports = sol_to_lamports(0.01);
+    invoke(
+        &transfer(
+            source_account_info.key,
+            destination_account_info.key,
+            lamports,
+        ), 
+        &[
+            source_account_info.clone(),
+            destination_account_info.clone(),
+        ],
+    )?;
+    let mut collection_account_data = CollectionAccountData::try_from_slice_unchecked(
+        &collection_account_info.data.borrow_mut())?;
+    if !collection_account_data.is_initialized() {
+        return Err(CollectionError::Uninitialized.into());
+    }
+    collection_account_data.stars += 100;
+    collection_account_data.serialize(&mut *collection_account_info.data.borrow_mut())?;
+
+    Ok(())
+}
+
+pub fn process_light_up_stars_thousand(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo],
+) -> ProgramResult {
+    assert_program_id(program_id)?;
+    let account_info_iter = &mut accounts.iter();
+    let collection_account_info = next_account_info(account_info_iter)?;
+    let source_account_info = next_account_info(account_info_iter)?;
+    let destination_account_info = next_account_info(account_info_iter)?;
+
+    assert_treasury_account(destination_account_info)?;
+    let lamports = sol_to_lamports(1 as f64);
+    invoke(
+        &transfer(
+            source_account_info.key,
+            destination_account_info.key,
+            lamports,
+        ), 
+        &[
+            source_account_info.clone(),
+            destination_account_info.clone(),
+        ],
+    )?;
+    let mut collection_account_data = CollectionAccountData::try_from_slice_unchecked(
+        &collection_account_info.data.borrow_mut())?;
+    if !collection_account_data.is_initialized() {
+        return Err(CollectionError::Uninitialized.into());
+    }
+    collection_account_data.stars += 1000;
+    collection_account_data.serialize(&mut *collection_account_info.data.borrow_mut())?;
+
+    Ok(())
+}
+
+pub fn process_withdraw(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo],
+) -> ProgramResult {
+    assert_program_id(program_id)?;
+    let account_info_iter = &mut accounts.iter();
+    let source_account_info = next_account_info(account_info_iter)?;
+    let treasury_account_info = next_account_info(account_info_iter)?;
+    let destination_account_info = next_account_info(account_info_iter)?;
+
+    Ok(())
+}
+
+pub fn process_close_account(
+    program_id: &Pubkey,
+    accounts: &[AccountInfo],
+    account_type: AccountType,
+) -> ProgramResult {
+    assert_program_id(program_id)?;
+    let account_info_iter = &mut accounts.iter();
+    let account_info = next_account_info(account_info_iter)?;
+    let recipient_account_info = next_account_info(account_info_iter)?;
+    let authority_account_info  = next_account_info(account_info_iter)?;
+    match account_type {
+        AccountType::Uninitialized => {
+            return Err(CollectionError::InvalidAccountType.into());
+        }, 
+        AccountType::CollectionAccount => {
+            let collection_data = CollectionAccountData::try_from_slice_unchecked(&account_info.data.borrow_mut())?;
+            if collection_data.authority != *authority_account_info.key 
+                || !authority_account_info.is_signer {
+                return Err(CollectionError::NotCollectionAuthority.into());
+            }
+            let recipient_starting_lamports = recipient_account_info.lamports();
+            **recipient_account_info.lamports.borrow_mut() = recipient_starting_lamports.checked_add(account_info.lamports()).unwrap();
+            **account_info.lamports.borrow_mut() = 0;
+
+            let mut account_data = account_info.data.borrow_mut();
+            account_data.fill(0);
+        },
+        AccountType::CollectionIndexAccount => {
+            CollectionIndexAccountData::try_from_slice_unchecked(&account_info.data.borrow_mut())?;
+            let recipient_starting_lamports = recipient_account_info.lamports();
+            **recipient_account_info.lamports.borrow_mut() = recipient_starting_lamports.checked_add(account_info.lamports()).unwrap();
+            **account_info.lamports.borrow_mut() = 0;
+
+            let mut account_data = account_info.data.borrow_mut();
+            account_data.fill(0);
+        }
+    }
+    Ok(())
+}
+
 fn assert_mint_account(
     mint_account_info: &AccountInfo, 
     payer_account_info: &AccountInfo,
@@ -156,6 +317,14 @@ fn assert_program_id(program_id: &Pubkey) -> ProgramResult {
 fn assert_create_collection_args(args: &CreateCollectionAccountArgs) -> ProgramResult {
     if !args.is_valid() {
         return Err(CollectionError::InvalidInstructionArguments.into());
+    }
+    Ok(())
+}
+
+fn assert_treasury_account(treasury_account_info: &AccountInfo) -> ProgramResult {
+    let (pda, _) = get_treasury_account();
+    if *treasury_account_info.key != pda {
+        return  Err(CollectionError::InvalidTreasuryAccount.into());
     }
     Ok(())
 }
