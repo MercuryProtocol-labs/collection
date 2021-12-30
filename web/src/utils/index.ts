@@ -1,4 +1,5 @@
 import { PublicKey } from '@solana/web3.js';
+
 export function shortAddress(address: string | PublicKey) {
   if (!address) {
     return '';

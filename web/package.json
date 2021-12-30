@@ -3,7 +3,7 @@
   "scripts": {
     "start": "umi dev",
     "build": "umi build",
-    "deploy": "gh-pages -d dist",
+    "deploy": "yarn build && gh-pages -d dist",
     "postinstall": "umi generate tmp",
     "prettier": "prettier --write '**/*.{js,jsx,tsx,ts,less,md,json}'",
     "test": "umi-test",
@@ -23,6 +23,7 @@
   "dependencies": {
     "@ant-design/pro-layout": "^6.5.0",
     "@metaplex/js": "4.6.0",
+    "@solana/spl-token-registry": "^0.2.1141",
     "@solana/wallet-adapter-base": "^0.8.1",
     "@solana/wallet-adapter-react": "^0.14.1",
     "@solana/wallet-adapter-react-ui": "^0.7.0",

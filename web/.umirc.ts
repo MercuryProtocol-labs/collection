@@ -4,6 +4,8 @@ export default defineConfig({
   nodeModulesTransform: {
     type: 'none',
   },
+  publicPath: '/collection/',
+  hash: true,
   history: { type: 'hash' },
   theme: {
     '@primary-color': '#4e44ce',

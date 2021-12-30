@@ -1,4 +1,4 @@
-import React, { FC, useMemo } from 'react';
+import React, { FC, useMemo, useContext } from 'react';
 import { ConnectionProvider, WalletProvider } from '@solana/wallet-adapter-react';
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 import {
@@ -16,6 +16,7 @@ import BasicLayout from '@ant-design/pro-layout';
 import { Link } from 'umi';
 import { GithubOutlined, LogoutOutlined, ShoppingOutlined, HomeOutlined, ForkOutlined } from '@ant-design/icons';
 import { AppBar } from '@/components/AppBar';
+import { NetworkProvider, NetworkContext } from '@/contexts';
 
 import styles from './index.less';
 require('@solana/wallet-adapter-react-ui/styles.css');
@@ -24,7 +25,8 @@ require('@solana/wallet-adapter-react-ui/styles.css');
 
 const Basic: FC = ({ children }) => {
   // Can be set to 'devnet', 'testnet', or 'mainnet-beta'
-  const network = WalletAdapterNetwork.Devnet;
+  // const network = WalletAdapterNetwork.Devnet;
+  const { network } = useContext(NetworkContext);
   console.log('network: ', network);
 
   // You can also provide a custom RPC endpoint
@@ -124,4 +126,11 @@ const Basic: FC = ({ children }) => {
   );
 };
 
-export default Basic;
+const WrapedBasic: FC = ({ children }) => {
+  return (
+    <NetworkProvider>
+      <Basic>{children}</Basic>
+    </NetworkProvider>
+  );
+};
+export default WrapedBasic;
