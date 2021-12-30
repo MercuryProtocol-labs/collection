@@ -1,4 +1,4 @@
-import { createContext } from 'react';
+import { createContext, useContext } from 'react';
 import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
 import { useLocalStorageState } from '@/hooks';
 
@@ -27,4 +27,8 @@ export function NetworkProvider({ children = undefined as any }) {
       {children}
     </NetworkContext.Provider>
   );
+}
+
+export function useNetwork() {
+  return useContext(NetworkContext);
 }

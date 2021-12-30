@@ -3,6 +3,7 @@ import { Link, useHistory } from 'umi';
 import { PublicKey } from '@solana/web3.js';
 import { CollectionAccountData } from '@/models';
 import { shortAddress } from '@/utils';
+import { LinkAddress } from '@/components/LinkAddress';
 import classnames from 'classnames';
 import styles from './index.less';
 
@@ -41,13 +42,7 @@ export default ({ data, block }: { data: CollectionAccountData & { pubkey: Publi
         </span>
 
         <span>
-          authority:{' '}
-          <a
-            href={`https://explorer.solana.com/address/${new PublicKey(authority).toString()}?cluster=devnet`}
-            target="_blank"
-          >
-            {shortAddress(new PublicKey(authority))}
-          </a>
+          authority: <LinkAddress address={new PublicKey(authority).toString()} />
         </span>
         <span>
           tags:{' '}
