@@ -4,6 +4,7 @@ export default defineConfig({
   nodeModulesTransform: {
     type: 'none',
   },
+  history: { type: 'hash' },
   theme: {
     '@primary-color': '#4e44ce',
     '@text-color': '#fff',

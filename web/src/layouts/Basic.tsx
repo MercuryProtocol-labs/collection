@@ -11,19 +11,11 @@ import {
 } from '@solana/wallet-adapter-wallets';
 import { WalletModalProvider, WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 import { clusterApiUrl } from '@solana/web3.js';
-import { Space, Layout, Menu } from 'antd';
-import Header from '@/layouts/Header';
+import { Menu } from 'antd';
 import BasicLayout from '@ant-design/pro-layout';
 import { Link } from 'umi';
-import {
-  PieChartOutlined,
-  GithubOutlined,
-  BankOutlined,
-  LogoutOutlined,
-  ShoppingOutlined,
-  HomeOutlined,
-  ForkOutlined,
-} from '@ant-design/icons';
+import { GithubOutlined, LogoutOutlined, ShoppingOutlined, HomeOutlined, ForkOutlined } from '@ant-design/icons';
+import { AppBar } from '@/components/AppBar';
 
 import styles from './index.less';
 require('@solana/wallet-adapter-react-ui/styles.css');
@@ -66,7 +58,7 @@ const Basic: FC = ({ children }) => {
       <WalletProvider wallets={wallets} autoConnect>
         <WalletModalProvider>
           <BasicLayout
-            title="McrCollection (Devnet)"
+            title="McrCollection"
             navTheme={theme}
             headerTheme={theme}
             theme={theme}
@@ -74,7 +66,7 @@ const Basic: FC = ({ children }) => {
             fixSiderbar={true}
             primaryColor="#d83aeb"
             logo={<div className="App-logo" />}
-            rightContentRender={() => <WalletMultiButton />}
+            rightContentRender={() => <AppBar />}
             links={[]}
             className={styles.layoutContent}
             menuContentRender={() => {

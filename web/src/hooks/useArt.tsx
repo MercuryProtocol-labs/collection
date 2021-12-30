@@ -71,15 +71,14 @@ export const useUriToArt = (uri: string) => {
     (async () => {
       if (!uri) return;
 
-      try {
-        setIsLoading(true);
-        fetch(uri)
-          .then((res) => res.json())
-          .then((data) => {
-            setIsLoading(false);
-            setArtUrl(data.image);
-          });
-      } catch (error) {}
+      setIsLoading(true);
+      fetch(uri)
+        .then((res) => res.json())
+        .then((data) => {
+          setIsLoading(false);
+          setArtUrl(data.image);
+        })
+        .catch(console.error);
     })();
   }, [uri]);
 
