@@ -39,12 +39,14 @@ pub enum CollectionInstruction {
     ///
     /// Accounts expected by:
     /// 
-    ///   0. `[writeable, singer]` Collcection account
-    ///   1. `[]` Mint of token asset
-    ///   2. `[signer]` Funding account (must be a system account)
-    ///   3. `[writable]`  Collection index account (pda of ['collection', program id, mint id])
-    ///   4. `[]` Rent info
-    ///   5. `[]` System program id account
+    ///   0. `[writeable]` Collcection account
+    ///   1. `[signer]` Authority of collection account
+    ///   2. `[]` Mint of token asset (supply must be 1)
+    ///   3. `[]` Token account of mint (amount must be 1)
+    ///   4. `[writable]`  Collection index account (pda of ['collection', program id, mint id])
+    ///   5. `[signer]` Funding account (must be a system account)
+    ///   6. `[]` Rent info
+    ///   7. `[]` System program id account
     IncludeToken,
 
     /// light up collection stars once
@@ -112,20 +114,25 @@ pub fn create_collection_account(
     }
 }
 
+
 pub fn include_token(
     program_id: Pubkey,
     collection_account: Pubkey,
+    collection_authority_account: Pubkey,
     mint_account: Pubkey,
-    payer_account: Pubkey,
+    mint_token_account: Pubkey,
     index_account: Pubkey,
+    payer_account: Pubkey,
 ) -> Instruction{
     Instruction {
         program_id,
         accounts: vec![
-            AccountMeta::new(collection_account, true),
+            AccountMeta::new(collection_account, false),
+            AccountMeta::new(collection_authority_account, true),
             AccountMeta::new(mint_account, false),
-            AccountMeta::new(payer_account, true),
+            AccountMeta::new(mint_token_account, false),
             AccountMeta::new(index_account, false),
+            AccountMeta::new(payer_account, true),
             AccountMeta::new_readonly(sysvar::rent::id(), false),
             AccountMeta::new_readonly(system_program::id(), false),
         ],
@@ -184,12 +191,14 @@ pub fn close_account(
 
 pub fn withdraw(
     program_id: Pubkey,
+    treasury_manager_account: Pubkey,
     treasury_account: Pubkey,
     recipient_account: Pubkey,
 ) -> Instruction {
     Instruction {
         program_id,
         accounts: vec![
+            AccountMeta::new(treasury_manager_account, true),
             AccountMeta::new(treasury_account, false),
             AccountMeta::new(recipient_account, false),
         ],

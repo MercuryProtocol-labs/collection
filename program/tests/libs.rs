@@ -7,7 +7,6 @@ use collection::instruction::{
     include_token,
     light_up_stars_hundred,
     close_account,
-    withdraw,
 };
 use collection::state::{CollectionAccountData, AccountType};
 use collection::utils::{get_index_account, get_treasury_account};
@@ -110,15 +109,17 @@ async fn test_include_token() {
     let ix = include_token(
         program_id,
         collection_keypair.pubkey(),
-        mint_keypair.pubkey(),
         payer_pubkey,
+        mint_keypair.pubkey(),
+        nft_ata,
         index_account,
+        payer_pubkey,
     );
     let mut transaction = Transaction::new_with_payer(
         &[ix],
         Some(&context.payer.pubkey()),
     );
-    transaction.sign(&[&context.payer, &collection_keypair], context.last_blockhash);
+    transaction.sign(&[&context.payer], context.last_blockhash);
     context.banks_client.process_transaction(transaction).await.unwrap();
 }
 

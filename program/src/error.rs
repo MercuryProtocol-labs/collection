@@ -56,6 +56,10 @@ pub enum CollectionError {
     /// Insufficient funds
     #[error("Insufficient funds")]
     InsufficientFunds,
+
+    /// You must be the treasury manager and signer on this transaction
+    #[error("You must be the treasury manager and signer on this transaction")]
+    NotTreasuryManager,
 }
 
 impl PrintProgramError for CollectionError {

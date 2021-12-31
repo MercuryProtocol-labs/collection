@@ -1,3 +1,4 @@
+use solana_program::program_pack::IsInitialized;
 use {
     crate::{
         instruction::{CollectionInstruction, CreateCollectionAccountArgs},
@@ -14,10 +15,14 @@ use {
         program_pack::Pack,
         native_token::sol_to_lamports,
         program::invoke,
+        program_option::COption,
         msg,
     },
     borsh::{BorshDeserialize, BorshSerialize},
+    spl_token::state::Mint as spl_mint,
+    spl_token::state::Account as spl_account,
 };
+use std::str::FromStr;
 
 pub fn process_instruction(
     program_id: &Pubkey,
@@ -32,7 +37,7 @@ pub fn process_instruction(
         },
         CollectionInstruction::IncludeToken => {
             msg!("Instruction: Include Token");
-            process_create_include_token(program_id, accounts)
+            process_include_token(program_id, accounts)
         },
         CollectionInstruction::LightUpStarsOnce => {
             msg!("Instruction: Light Up Stars Once");
@@ -97,16 +102,18 @@ pub fn process_create_collection_account(
     Ok(())
 }
 
-pub fn process_create_include_token(
+pub fn process_include_token(
     program_id: &Pubkey,
     accounts: &[AccountInfo],
 ) -> ProgramResult {
     assert_program_id(program_id)?;
     let account_info_iter = &mut accounts.iter();
     let collection_account_info = next_account_info(account_info_iter)?;
+    let collection_auth_account_info = next_account_info(account_info_iter)?;
     let mint_account_info = next_account_info(account_info_iter)?;
-    let payer_account_info = next_account_info(account_info_iter)?;
+    let mint_token_account_info = next_account_info(account_info_iter)?;
     let index_account_info = next_account_info(account_info_iter)?;
+    let payer_account_info = next_account_info(account_info_iter)?;
     let rent_sysvar_info = next_account_info(account_info_iter)?;
     let system_program_info = next_account_info(account_info_iter)?;
 
@@ -116,11 +123,15 @@ pub fn process_create_include_token(
         return Err(CollectionError::Uninitialized.into());
     }
     // check collection's authority 
-    if collection_account_data.authority != *payer_account_info.key 
-        || !payer_account_info.is_signer{
+    if collection_account_data.authority != *collection_auth_account_info.key 
+        || !collection_auth_account_info.is_signer {
         return Err(CollectionError::NotCollectionAuthority.into());
     }
-    assert_mint_account(mint_account_info, payer_account_info)?;
+    assert_mint_authority(
+        mint_account_info,
+        mint_token_account_info,
+        collection_auth_account_info,
+    )?;
     
     let (index_account, bump_seed) = get_index_account(
         mint_account_info.key, 
@@ -246,10 +257,11 @@ pub fn process_withdraw(
 ) -> ProgramResult {
     assert_program_id(program_id)?;
     let account_info_iter = &mut accounts.iter();
-    //let source_account_info = next_account_info(account_info_iter)?;
+    let treasury_manager_account_info = next_account_info(account_info_iter)?;
     let treasury_account_info = next_account_info(account_info_iter)?;
     let recipient_account_info = next_account_info(account_info_iter)?;
 
+    assert_treasury_manager(treasury_manager_account_info)?;
     assert_treasury_account(treasury_account_info)?;
     let lamports = treasury_account_info.lamports();
     if lamports == 0 {
@@ -302,18 +314,32 @@ pub fn process_close_account(
     Ok(())
 }
 
-fn assert_mint_account(
+fn assert_mint_authority(
     mint_account_info: &AccountInfo, 
-    payer_account_info: &AccountInfo,
+    mint_token_account: &AccountInfo, 
+    collection_auth_account_info: &AccountInfo,
 ) -> ProgramResult {
-    let mint = spl_token::state::Mint::unpack_unchecked(&mint_account_info.data.borrow())?;
-    if mint.supply != 1 || mint.decimals != 0 {
+    if *mint_account_info.owner != spl_token::id() 
+        || *mint_token_account.owner != spl_token::id() {
+        return Err(CollectionError::InvalidNFT.into());
+
+    }
+    let mint = spl_mint::unpack_unchecked(&mint_account_info.data.borrow())?;
+    let token_account = spl_account::unpack_unchecked(&mint_token_account.data.borrow())?;
+    if !mint.is_initialized() 
+        || mint.supply != 1 
+        || mint.decimals != 0 
+        || !token_account.is_initialized()
+        || token_account.mint != *mint_account_info.key
+        || token_account.amount != 1 {
         return Err(CollectionError::InvalidNFT.into());
     }
-    if mint.mint_authority.unwrap() != *payer_account_info.key {
-        return Err(CollectionError::NotMintAuthority.into());
-    }
-    Ok(())
+
+    if (token_account.owner == *collection_auth_account_info.key) 
+        || (token_account.delegate.is_some() && token_account.delegate == COption::Some(*collection_auth_account_info.key) && token_account.delegated_amount == 1) {
+        return Ok(());
+    } 
+    return Err(CollectionError::NotCollectionAuthority.into());
 }
 
 fn assert_program_id(program_id: &Pubkey) -> ProgramResult {
@@ -333,7 +359,19 @@ fn assert_create_collection_args(args: &CreateCollectionAccountArgs) -> ProgramR
 fn assert_treasury_account(treasury_account_info: &AccountInfo) -> ProgramResult {
     let (pda, _) = get_treasury_account();
     if *treasury_account_info.key != pda {
-        return  Err(CollectionError::InvalidTreasuryAccount.into());
+        return Err(CollectionError::InvalidTreasuryAccount.into());
+    }
+    Ok(())
+}
+
+fn get_treasury_manager_account() -> Pubkey {
+    Pubkey::from_str(&"Ep1P3v2rMZ2FkyPx5uuGMaTztdSdtdvaUjcahT9y3EQv".to_string()).unwrap()
+}
+
+fn assert_treasury_manager(manager_account_info: &AccountInfo) -> ProgramResult {
+    if *manager_account_info.key != get_treasury_manager_account() 
+        || !manager_account_info.is_signer {
+        return Err(CollectionError::NotTreasuryManager.into());
     }
     Ok(())
 }
