@@ -38,13 +38,6 @@ export async function getTreasuryProgram() {
   return treasuryPubkey;
 }
 
-export enum AccountTypes {
-  ADD_NFT = 1,
-  STAR_ONCE = 2,
-  STAR_HUNDRED = 3,
-  STAR_THOUSAND = 4,
-}
-
 export function decodeCollectionAccountData({ pubkey, account }: { pubkey: PublicKey; account: AccountInfo<Buffer> }) {
   try {
     const data = deserializeUnchecked(COLLECTION_ACCOUNT_DATA_SCHEMA, CollectionAccountData, account.data);
@@ -79,12 +72,10 @@ export async function getMyConnections(connection: Connection, wallet: WalletCon
 
   const walletPubkeyBytes = wallet.publicKey?.toBytes();
 
-  const arr1 = Array.from(walletPubkeyBytes);
-  arr1.unshift(1);
-  arr1.concat(Array.from(wallet.publicKey.toBytes()));
-
-  const bytes = Buffer.from(arr1);
-  const bs58Str = bs58.encode(bytes);
+  // [accountType, ...publicKey?.toBytes()]
+  const buf1 = Buffer.from([1]);
+  const buf = Buffer.concat([buf1, walletPubkeyBytes], 33);
+  const bs58Str = bs58.encode(buf);
 
   const collections = await connection.getProgramAccounts(COLLECTION_PROGRAM_ID, {
     encoding: 'base64',
@@ -106,8 +97,6 @@ export async function createCollection(connection: Connection, wallet: WalletCon
   if (!wallet?.publicKey || !wallet?.signTransaction) {
     throw new Error('wallet not connected');
   }
-
-  console.log('args: ', args);
 
   const collectionDataU8 = serialize(CREATE_COLLECTION_ARGS_SCHEMA, args);
 
@@ -139,6 +128,7 @@ export async function addNFTToCollection(
   wallet: WalletContextState,
   collectionAccount: PublicKey,
   mint: PublicKey,
+  tokenAccountOfMint: PublicKey,
 ) {
   if (!wallet.publicKey || !wallet.signTransaction) {
     throw new Error('wallet not connected');
@@ -150,18 +140,33 @@ export async function addNFTToCollection(
     COLLECTION_PROGRAM_ID,
   );
 
+  console.log(
+    collectionAccount.toString(),
+    wallet.publicKey.toString(),
+    mint.toString(),
+    tokenAccountOfMint.toString(),
+    indexAccount.toString(),
+    wallet.publicKey.toString(),
+    SYSVAR_RENT_PUBKEY.toString(),
+    SystemProgram.programId.toString(),
+  );
+
   const instruction = new TransactionInstruction({
     data: Buffer.from(dataU8),
     keys: [
-      { isSigner: false, isWritable: true, pubkey: collectionAccount },
-      { isSigner: false, isWritable: false, pubkey: mint },
-      { isSigner: true, isWritable: false, pubkey: wallet.publicKey },
-      { isSigner: false, isWritable: true, pubkey: indexAccount },
-      { isSigner: false, isWritable: false, pubkey: SYSVAR_RENT_PUBKEY },
-      { isSigner: false, isWritable: false, pubkey: SystemProgram.programId },
+      { isSigner: false, isWritable: true, pubkey: collectionAccount }, // 0. `[writeable]` Collcection account
+      { isSigner: true, isWritable: false, pubkey: wallet.publicKey }, // 1. `[signer]` Authority of collection account
+      { isSigner: false, isWritable: false, pubkey: mint }, // 2. `[]` Mint of token asset (supply must be 1)
+      { isSigner: false, isWritable: false, pubkey: tokenAccountOfMint }, // 3. `[]` Token account of mint (amount must be 1)
+      { isSigner: false, isWritable: true, pubkey: indexAccount }, // 4. `[writable]`  Collection index account (pda of ['collection', program id, mint id])
+      { isSigner: true, isWritable: false, pubkey: wallet.publicKey }, // 5. `[signer]` Funding account (must be a system account)
+      { isSigner: false, isWritable: false, pubkey: SYSVAR_RENT_PUBKEY }, // 6. `[]` Rent info
+      { isSigner: false, isWritable: false, pubkey: SystemProgram.programId }, // 7. `[]` System program id account
     ],
     programId: COLLECTION_PROGRAM_ID,
   });
+
+  console.log('instruction: ', instruction);
 
   const transaction = new Transaction({ feePayer: wallet.publicKey });
   transaction.add(instruction);
@@ -173,49 +178,11 @@ export async function addNFTToCollection(
   return hash;
 }
 
-class QueryCollectionNFTsParams {
-  type: number;
-  collection: PublicKey;
-
-  constructor(args: { type: number; collection: PublicKey }) {
-    this.type = args.type;
-    this.collection = args.collection;
-  }
-}
-const QUERY_COLLECTION_NFTS_PARAMS_SCHEMA = new Map<any, any>([
-  [
-    PublicKey,
-    {
-      kind: 'struct',
-      fields: [['']],
-    },
-  ],
-  [
-    QueryCollectionNFTsParams,
-    {
-      kind: 'struct',
-      fields: [
-        ['type', 'u8'],
-        ['collection', PublicKey],
-      ],
-    },
-  ],
-]);
 export async function getCollectionNFTs(connection: Connection, collection: PublicKey) {
-  const args = new QueryCollectionNFTsParams({
-    type: 2,
-    collection,
-  });
+  const buf1 = Buffer.from([2]); // accountType
+  const buf = Buffer.concat([buf1, collection.toBytes()], 33);
 
-  const bytes1 = collection.toBytes();
-  const arr1 = Array.from(bytes1);
-  arr1.unshift(2);
-  const bytes2 = Buffer.from(arr1);
-
-  // const paramsU8 = serialize(QUERY_COLLECTION_NFTS_PARAMS_SCHEMA, args);
-  // console.log('paramsU8: ', paramsU8);
-  // const bytes = Buffer.from(paramsU8);
-  const bs58Str = bs58.encode(bytes2);
+  const bs58Str = bs58.encode(buf);
 
   const accounts = await connection.getProgramAccounts(COLLECTION_PROGRAM_ID, {
     filters: [
@@ -243,7 +210,7 @@ export async function starOnce(connection: Connection, wallet: WalletContextStat
     throw new Error('wallet not connected');
   }
 
-  const typeU8 = serialize(ACCOUNT_TYPE_SCHEMA, new AccountType({ type: AccountTypes.STAR_ONCE }));
+  const typeU8 = serialize(ACCOUNT_TYPE_SCHEMA, new AccountType({ type: CollectionInstructionType.LightUpStarsOnce }));
 
   const instruction = new TransactionInstruction({
     data: Buffer.from(typeU8),
@@ -306,15 +273,10 @@ export async function closeAccount(
     throw new Error('wallet not connected');
   }
 
-  console.log('accountType: ', accountType);
   const typeU8 = serialize(
     CLOSE_ACCOUNT_INSTRUCTION_ARGS_SCHEMA,
     new CloseAccountInstructionArgs({ accountType: accountType.type }),
   );
-
-  console.log('typeU8', typeU8);
-  console.log('collectionAccount', collectionAccount.toString());
-  console.log('wallet publicKey', wallet.publicKey.toString());
 
   const instruction = new TransactionInstruction({
     data: Buffer.from(typeU8),

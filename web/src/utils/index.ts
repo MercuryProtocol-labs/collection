@@ -11,3 +11,16 @@ export function shortAddress(address: string | PublicKey) {
 
   return `${address.substr(0, 5)}...${address.substr(-4)}`;
 }
+
+// export function metadataURIToImgURL(uri: string): Promise<string> {
+//   return new Promise((resolve) => {
+//     fetch(uri)
+//       .then((res) => res.json())
+//       .then((data) => {
+//         resolve(data.image);
+//       })
+//       .catch(() => {
+//         resolve('');
+//       });
+//   });
+// }

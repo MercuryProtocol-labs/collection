@@ -27,7 +27,6 @@ const Basic: FC = ({ children }) => {
   const { pathname } = useLocation();
   const { network } = useContext(NetworkContext);
   console.log('network: ', network);
-  console.log('pathname: ', pathname);
 
   // You can also provide a custom RPC endpoint
   const endpoint = useMemo(() => clusterApiUrl(network), [network]);

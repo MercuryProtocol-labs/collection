@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useHistory } from 'umi';
-import { Button, Card, Input, message, Row, Col } from 'antd';
+import { Button, Select, Input, message, Row, Col } from 'antd';
 import { LikeOutlined } from '@ant-design/icons';
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 import { addNFTToCollection, decodeCollectionAccountData, getCollectionNFTs } from '@/actions';
@@ -9,9 +9,14 @@ import { PublicKey } from '@solana/web3.js';
 import CollectionItem from '@/components/CollectionItem';
 import NftItem from '@/components/ArtItem';
 import { GUTTER } from '@/pages/home';
-import { starMultiple, AccountTypes, closeAccount } from '@/actions';
+import { starMultiple, closeAccount } from '@/actions';
+import { useMyNFTs } from '@/hooks';
+import { ArtContent } from '@/components/ArtItem';
+import { Token, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID, MintLayout } from '@solana/spl-token';
 
 import styles from './index.less';
+
+const { Option } = Select;
 
 export default () => {
   const wallet = useWallet();
@@ -19,13 +24,14 @@ export default () => {
   const history = useHistory();
   const { id } = useParams<{ id: string }>();
   const [collection, setCollection] = useState<(CollectionAccountData & { pubkey: PublicKey }) | null>(null);
-  const [tokenAddress, setTokenAddress] = useState(''); // NFT mint address
+  const [tokenAddress, setTokenAddress] = useState<string>(); // NFT mint address
   const [hasAuthority, setHasAuthority] = useState(false);
   const [starLoading, setStarLoading] = useState(false);
 
-  const [nfts, setNfts] = useState<any[]>([]);
+  const { isLoading, list } = useMyNFTs();
+  console.log('list: ', list);
 
-  console.log('collection: ', collection);
+  const [nfts, setNfts] = useState<any[]>([]);
 
   useEffect(() => {
     getCollectionAccountData();
@@ -57,10 +63,27 @@ export default () => {
 
   async function addNFT() {
     try {
+      if (!tokenAddress) {
+        message.error('Select your NFT');
+        return;
+      }
+      if (!wallet || !wallet.publicKey) {
+        message.error('Connect wallet please');
+        return;
+      }
       const mint = new PublicKey(tokenAddress);
 
-      const hash = await addNFTToCollection(connection, wallet, new PublicKey(id), mint);
+      const [tokenAccountOfMint] = await PublicKey.findProgramAddress(
+        [wallet.publicKey.toBuffer(), TOKEN_PROGRAM_ID.toBuffer(), mint.toBuffer()],
+        ASSOCIATED_TOKEN_PROGRAM_ID,
+      );
+
+      // const authority = new PublicKey('13K1aKvDBij4RA5Abe6rBLnCqMdHcGA4P1ygESsA5cwr');
+      // const tokenAccountOfMint = new PublicKey('9zoR867KwGAsHjL9Lmc3Z8usgkJDnfYXixYdC17z1ZBG');
+
+      const hash = await addNFTToCollection(connection, wallet, new PublicKey(id), mint, tokenAccountOfMint);
       console.log('hash: ', hash);
+      location.reload();
     } catch (error: any) {
       console.error(error);
       message.error(error.message);
@@ -144,7 +167,26 @@ export default () => {
         <>
           <div style={{ border: '3px solid #4e44ce', borderRadius: '16px', marginTop: '24px', padding: '48px 12px' }}>
             <div>
-              <Input size="large" placeholder="Token address" onChange={(e) => setTokenAddress(e.target.value)} />
+              {/* <Input size="large" placeholder="Token address" onChange={(e) => setTokenAddress(e.target.value)} /> */}
+              <div>My NFTs:</div>
+              <Select size="large" style={{ width: '100%' }} onChange={(val) => setTokenAddress(val as string)}>
+                {list?.map((item) => (
+                  <Option value={item.data.mint}>
+                    <span
+                      style={{
+                        display: 'inline-block',
+                        width: '25px',
+                        height: '25px',
+                        marginRight: '12px',
+                      }}
+                    >
+                      <ArtContent key={item.data.data.mint} uri={item.data.data.uri}></ArtContent>
+                    </span>
+                    <span>{item.data.data.name}</span>
+                  </Option>
+                ))}
+              </Select>
+
               <Button size="large" type="primary" block onClick={addNFT} style={{ marginTop: '24px' }}>
                 Add Token To The Collection
               </Button>

@@ -5,11 +5,10 @@ import { useConnection } from '@solana/wallet-adapter-react';
 import { getMetadata } from '@/actions';
 import { useUriToArt } from '@/hooks';
 import { CollectionIndexAccountData } from '@/models';
-import { shortAddress } from '@/utils';
 import styles from './index.less';
 
 // only image
-const ArtContent: FC<{ uri: string }> = ({ uri }) => {
+export const ArtContent: FC<{ uri: string }> = ({ uri }) => {
   const { artUrl, isLoading } = useUriToArt(uri);
 
   if (!uri) return null;
@@ -17,7 +16,7 @@ const ArtContent: FC<{ uri: string }> = ({ uri }) => {
   return (
     <>
       {isLoading && <Spin />}
-      {artUrl && <img src={artUrl} alt="" />}
+      {artUrl && <img src={artUrl} style={{ maxWidth: '100%', maxHeight: '100%' }} />}
     </>
   );
 };
