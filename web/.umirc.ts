@@ -4,7 +4,7 @@ export default defineConfig({
   nodeModulesTransform: {
     type: 'none',
   },
-  publicPath: '/collection/',
+  // publicPath: '/collection/',
   hash: true,
   history: { type: 'hash' },
   theme: {
