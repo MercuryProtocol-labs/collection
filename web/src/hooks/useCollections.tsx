@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { getAllConnection } from '@/actions';
-import { useConnection } from '@solana/wallet-adapter-react';
+import { getAllConnection, getMyConnections, getTreasuryBalance } from '@/actions';
+import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { CollectionAccountData } from '@/models';
 import BN from 'bn.js';
-import { PublicKey } from '@solana/web3.js';
+import { PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 
 export const useCollections = () => {
   const { connection } = useConnection();
@@ -20,7 +20,7 @@ export const useCollections = () => {
         setIsLoading(true);
 
         const _collections = await getAllConnection(connection);
-        console.log('collections:', _collections);
+
         setCollections(_collections);
         setIsLoading(false);
       } catch (error) {
@@ -28,6 +28,34 @@ export const useCollections = () => {
       }
     })();
   }, [connection]);
+
+  return { collections, isLoading };
+};
+
+export const useMyCollections = () => {
+  const { connection } = useConnection();
+  const wallet = useWallet();
+  const [collections, setCollections] = useState<(CollectionAccountData & { pubkey: PublicKey })[] | undefined>(
+    undefined,
+  );
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    (async () => {
+      if (!connection || !wallet.publicKey) return;
+
+      try {
+        setIsLoading(true);
+
+        const _collections = await getMyConnections(connection, wallet);
+
+        setCollections(_collections);
+        setIsLoading(false);
+      } catch (error) {
+        setIsLoading(false);
+      }
+    })();
+  }, [connection, wallet.publicKey?.toBase58()]);
 
   return { collections, isLoading };
 };
@@ -60,4 +88,24 @@ export const useCollectionsCount = () => {
   }, [collections]);
 
   return count;
+};
+
+export const useTreasuryBalance = () => {
+  const { connection } = useConnection();
+  const [balance, setBalance] = useState({
+    amount: 0,
+    uiAmount: 0,
+  });
+
+  useEffect(() => {
+    (async () => {
+      const val = await getTreasuryBalance(connection);
+      setBalance({
+        amount: val,
+        uiAmount: val / LAMPORTS_PER_SOL,
+      });
+    })();
+  }, [connection]);
+
+  return balance;
 };

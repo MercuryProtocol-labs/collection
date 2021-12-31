@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { useCollectionsCount, useCollections } from '@/hooks';
+import { useCollectionsCount, useCollections, useTreasuryBalance } from '@/hooks';
 import { Row, Col, Card, Statistic, Spin } from 'antd';
 import CollectionItem from './Item';
 import classnames from 'classnames';
@@ -10,24 +10,34 @@ export const GUTTER = [16, { xs: 8, sm: 16, md: 16, lg: 16 }] as any;
 export default () => {
   const count = useCollectionsCount();
   const { collections, isLoading } = useCollections();
-  console.log(count);
+  const balance = useTreasuryBalance();
 
   return (
     <div className={styles.home}>
       <Row gutter={GUTTER} className="home-info-row">
-        <Col xs={24} xl={5}>
+        <Col xs={24} xl={6}>
           <Card>
-            <Statistic title="Current collections size" value={count?.collections} valueStyle={{ color: '#3fBB00' }} />
+            <Statistic title="Current collections size" value={count?.collections} />
           </Card>
         </Col>
-        <Col xs={24} xl={5}>
+        <Col xs={24} xl={6}>
           <Card>
             <Statistic title="Total supply" value={count?.supply} />
           </Card>
         </Col>
-        <Col xs={24} xl={5}>
+        <Col xs={24} xl={6}>
           <Card>
             <Statistic title="Total stars" value={count?.stars} />
+          </Card>
+        </Col>
+        <Col xs={24} xl={6}>
+          <Card>
+            <Statistic
+              title="Treasury Balance"
+              value={balance.uiAmount}
+              suffix="SOL"
+              valueStyle={{ color: 'rgb(171 102 255)' }}
+            />
           </Card>
         </Col>
       </Row>

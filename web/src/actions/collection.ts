@@ -20,11 +20,30 @@ import {
   AccountType,
   CollectionIndexAccountData,
   COLLECTION_INDEX_ACCOUNT_DATA_SCHEMA,
+  CloseAccountInstructionArgs,
+  CollectionInstructionType,
+  CLOSE_ACCOUNT_INSTRUCTION_ARGS_SCHEMA,
 } from '@/models';
 import { WalletContextState } from '@solana/wallet-adapter-react';
 
 // export const COLLECTION_PROGRAM_ID = new PublicKey('3c2kEHfoM9QXPJZxLvYGBkk3jncvtas8AoHFyRThbJA6');
 export const COLLECTION_PROGRAM_ID = new PublicKey('co111CrRL738X8TKrqmLcNBstgLFZjuMtZRBW2FGpbC');
+
+export async function getTreasuryProgram() {
+  const [treasuryPubkey] = await PublicKey.findProgramAddress(
+    [Buffer.from('collection'), Buffer.from('treasury'), COLLECTION_PROGRAM_ID.toBytes()],
+    COLLECTION_PROGRAM_ID,
+  );
+
+  return treasuryPubkey;
+}
+
+export enum AccountTypes {
+  ADD_NFT = 1,
+  STAR_ONCE = 2,
+  STAR_HUNDRED = 3,
+  STAR_THOUSAND = 4,
+}
 
 export function decodeCollectionAccountData({ pubkey, account }: { pubkey: PublicKey; account: AccountInfo<Buffer> }) {
   try {
@@ -45,6 +64,36 @@ export async function getAllConnection(connection: Connection) {
         memcmp: {
           offset: 0,
           bytes: '2',
+        },
+      },
+    ],
+  });
+
+  return collections.map(decodeCollectionAccountData);
+}
+
+export async function getMyConnections(connection: Connection, wallet: WalletContextState) {
+  if (!wallet.publicKey) {
+    return [];
+  }
+
+  const walletPubkeyBytes = wallet.publicKey?.toBytes();
+
+  const arr1 = Array.from(walletPubkeyBytes);
+  arr1.unshift(1);
+  arr1.concat(Array.from(wallet.publicKey.toBytes()));
+
+  const bytes = Buffer.from(arr1);
+  const bs58Str = bs58.encode(bytes);
+
+  const collections = await connection.getProgramAccounts(COLLECTION_PROGRAM_ID, {
+    encoding: 'base64',
+    commitment: 'recent',
+    filters: [
+      {
+        memcmp: {
+          offset: 0,
+          bytes: bs58Str,
         },
       },
     ],
@@ -187,4 +236,108 @@ export async function getCollectionNFTs(connection: Connection, collection: Publ
   }
 
   return nfts;
+}
+
+export async function starOnce(connection: Connection, wallet: WalletContextState, collectionAccount: PublicKey) {
+  if (!wallet.publicKey || !wallet.signTransaction) {
+    throw new Error('wallet not connected');
+  }
+
+  const typeU8 = serialize(ACCOUNT_TYPE_SCHEMA, new AccountType({ type: AccountTypes.STAR_ONCE }));
+
+  const instruction = new TransactionInstruction({
+    data: Buffer.from(typeU8),
+    keys: [{ isSigner: false, isWritable: true, pubkey: collectionAccount }],
+    programId: COLLECTION_PROGRAM_ID,
+  });
+
+  const transaction = new Transaction({ feePayer: wallet.publicKey });
+  transaction.add(instruction);
+  transaction.recentBlockhash = (await connection.getRecentBlockhash()).blockhash;
+
+  const signedTransaction = await wallet.signTransaction(transaction);
+  const hash = await sendAndConfirmRawTransaction(connection, signedTransaction.serialize());
+
+  return hash;
+}
+
+export async function starMultiple(
+  connection: Connection,
+  wallet: WalletContextState,
+  collectionAccount: PublicKey,
+  instructionType: CollectionInstructionType,
+) {
+  if (!wallet.publicKey || !wallet.signTransaction) {
+    throw new Error('wallet not connected');
+  }
+
+  const treasuryAccount = await getTreasuryProgram();
+
+  const typeU8 = serialize(ACCOUNT_TYPE_SCHEMA, new AccountType({ type: instructionType }));
+
+  const instruction = new TransactionInstruction({
+    data: Buffer.from(typeU8),
+    keys: [
+      { isSigner: false, isWritable: true, pubkey: collectionAccount },
+      { isSigner: true, isWritable: false, pubkey: wallet.publicKey },
+      { isSigner: false, isWritable: true, pubkey: treasuryAccount },
+      { isSigner: false, isWritable: false, pubkey: SystemProgram.programId },
+    ],
+    programId: COLLECTION_PROGRAM_ID,
+  });
+
+  const transaction = new Transaction({ feePayer: wallet.publicKey });
+  transaction.add(instruction);
+  transaction.recentBlockhash = (await connection.getRecentBlockhash()).blockhash;
+
+  const signedTransaction = await wallet.signTransaction(transaction);
+  const hash = await sendAndConfirmRawTransaction(connection, signedTransaction.serialize());
+
+  return hash;
+}
+
+export async function closeAccount(
+  connection: Connection,
+  wallet: WalletContextState,
+  collectionAccount: PublicKey,
+  accountType: AccountType,
+) {
+  if (!wallet.publicKey || !wallet.signTransaction) {
+    throw new Error('wallet not connected');
+  }
+
+  console.log('accountType: ', accountType);
+  const typeU8 = serialize(
+    CLOSE_ACCOUNT_INSTRUCTION_ARGS_SCHEMA,
+    new CloseAccountInstructionArgs({ accountType: accountType.type }),
+  );
+
+  console.log('typeU8', typeU8);
+  console.log('collectionAccount', collectionAccount.toString());
+  console.log('wallet publicKey', wallet.publicKey.toString());
+
+  const instruction = new TransactionInstruction({
+    data: Buffer.from(typeU8),
+    keys: [
+      { isSigner: false, isWritable: true, pubkey: collectionAccount },
+      { isSigner: false, isWritable: true, pubkey: wallet.publicKey },
+      { isSigner: true, isWritable: false, pubkey: wallet.publicKey },
+    ],
+    programId: COLLECTION_PROGRAM_ID,
+  });
+
+  const transaction = new Transaction({ feePayer: wallet.publicKey });
+  transaction.add(instruction);
+  transaction.recentBlockhash = (await connection.getRecentBlockhash()).blockhash;
+
+  const signedTransaction = await wallet.signTransaction(transaction);
+  const hash = await sendAndConfirmRawTransaction(connection, signedTransaction.serialize());
+
+  return hash;
+}
+
+export async function getTreasuryBalance(connection: Connection) {
+  const treasury = await getTreasuryProgram();
+  const balance = await connection.getBalance(treasury);
+  return balance;
 }

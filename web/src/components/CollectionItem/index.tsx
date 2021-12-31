@@ -1,14 +1,18 @@
-import { Space, Button, Tag } from 'antd';
-import { Link, useHistory } from 'umi';
+import { Link } from 'umi';
+import { message } from 'antd';
+import { LikeOutlined } from '@ant-design/icons';
+import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { PublicKey } from '@solana/web3.js';
 import { CollectionAccountData } from '@/models';
-import { shortAddress } from '@/utils';
 import { LinkAddress } from '@/components/LinkAddress';
+import { starOnce } from '@/actions';
 import classnames from 'classnames';
 import styles from './index.less';
 
 export default ({ data, block }: { data: CollectionAccountData & { pubkey: PublicKey }; block?: boolean }) => {
-  const { title, symbol, supply, description, tags, authority, pubkey } = data;
+  const { title, symbol, supply, description, tags, authority, pubkey, stars } = data;
+  const { connection } = useConnection();
+  const wallet = useWallet();
 
   function renderImage() {
     if (block && data.banaer) {
@@ -18,6 +22,16 @@ export default ({ data, block }: { data: CollectionAccountData & { pubkey: Publi
       return <img src={data.header_image} />;
     }
     return null;
+  }
+
+  async function handleStar() {
+    console.log('handle star');
+    try {
+      const hash = await starOnce(connection, wallet, pubkey);
+      message.success(hash);
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   return (
@@ -41,9 +55,17 @@ export default ({ data, block }: { data: CollectionAccountData & { pubkey: Publi
           <span style={{ marginLeft: 'auto', textAlign: 'right' }}>supply: {supply.toNumber()}</span>
         </span>
 
-        <span>
-          authority: <LinkAddress address={new PublicKey(authority).toString()} />
+        <span style={{ display: 'flex' }}>
+          <span>
+            authority: <LinkAddress address={new PublicKey(authority).toString()} />
+          </span>
+          <span style={{ marginLeft: 'auto', textAlign: 'right' }}>
+            <a onClick={handleStar}>
+              <LikeOutlined style={{ fontSize: 18 }} /> {stars.toNumber()}
+            </a>
+          </span>
         </span>
+
         <span>
           tags:{' '}
           {tags?.map((tag) => (
