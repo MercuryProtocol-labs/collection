@@ -9,7 +9,7 @@ import { PublicKey } from '@solana/web3.js';
 import CollectionItem from '@/components/CollectionItem';
 import NftItem from '@/components/ArtItem';
 import { GUTTER } from '@/pages/home';
-import { starMultiple, closeAccount } from '@/actions';
+import { starOnce, starMultiple, closeAccount } from '@/actions';
 import { useMyNFTs } from '@/hooks';
 import { ArtContent } from '@/components/ArtItem';
 import { Token, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID, MintLayout } from '@solana/spl-token';
@@ -110,6 +110,7 @@ export default () => {
       setStarLoading(true);
       const hash = await starMultiple(connection, wallet, collection.pubkey, type);
       message.success(hash);
+      location.reload();
     } catch (error) {
       console.error(error);
     }
@@ -130,12 +131,43 @@ export default () => {
     }
   }
 
+  async function handleStartOnce() {
+    if (!collection) {
+      return message.error('collection account error');
+    }
+
+    try {
+      setStarLoading(true);
+
+      const hash = await starOnce(connection, wallet, collection?.pubkey);
+
+      message.success(hash);
+      location.reload();
+    } catch (error) {
+      console.error(error);
+    }
+    setStarLoading(false);
+  }
+
   return (
     <div className={styles.content}>
       {!!collection && <CollectionItem data={collection} block></CollectionItem>}
 
       <div style={{ marginTop: '24px' }}>
         <Row gutter={GUTTER} className="home-info-row">
+          <Col xs={24}>
+            <Button
+              loading={starLoading}
+              size="large"
+              block
+              type="primary"
+              onClick={handleStartOnce}
+              icon={<LikeOutlined />}
+            >
+              +1 (only fee)
+            </Button>
+          </Col>
+
           <Col xs={12}>
             <Button
               size="large"
@@ -145,7 +177,7 @@ export default () => {
               onClick={() => handleStarsMultiple(CollectionInstructionType.LightUpStarsHundred)}
               loading={starLoading}
             >
-              +100
+              +100 (0.01 sol)
             </Button>
           </Col>
           <Col xs={12}>
@@ -157,7 +189,7 @@ export default () => {
               loading={starLoading}
               onClick={() => handleStarsMultiple(CollectionInstructionType.LightUpStarsThousand)}
             >
-              +1000
+              +1000 (1 sol)
             </Button>
           </Col>
         </Row>
@@ -193,7 +225,7 @@ export default () => {
             </div>
           </div>
 
-          <div style={{ marginTop: '24px' }}>
+          {/* <div style={{ marginTop: '24px' }}>
             <Row gutter={GUTTER} className="home-info-row">
               <Col xs={24}>
                 <Button size="large" block danger onClick={handleCloseAccount}>
@@ -201,7 +233,7 @@ export default () => {
                 </Button>
               </Col>
             </Row>
-          </div>
+          </div> */}
         </>
       )}
 

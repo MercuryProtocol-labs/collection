@@ -52,7 +52,7 @@ export default ({ data, block }: { data: CollectionAccountData & { pubkey: Publi
       <div className={styles.infos}>
         <span style={{ display: 'flex' }}>
           <span>symbol: {symbol}</span>
-          <span style={{ marginLeft: 'auto', textAlign: 'right' }}>supply: {supply.toNumber()}</span>
+          <span style={{ marginLeft: 'auto', textAlign: 'right' }}>items: {supply.toNumber()}</span>
         </span>
 
         <span style={{ display: 'flex' }}>

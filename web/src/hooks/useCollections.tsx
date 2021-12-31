@@ -20,8 +20,11 @@ export const useCollections = () => {
         setIsLoading(true);
 
         const _collections = await getAllConnection(connection);
+        const sortedList = _collections.sort((a, b) => {
+          return b.stars.toNumber() - a.stars.toNumber();
+        });
 
-        setCollections(_collections);
+        setCollections(sortedList);
         setIsLoading(false);
       } catch (error) {
         setIsLoading(false);
