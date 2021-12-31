@@ -182,6 +182,21 @@ pub fn close_account(
     }
 }
 
+pub fn withdraw(
+    program_id: Pubkey,
+    treasury_account: Pubkey,
+    recipient_account: Pubkey,
+) -> Instruction {
+    Instruction {
+        program_id,
+        accounts: vec![
+            AccountMeta::new(treasury_account, false),
+            AccountMeta::new(recipient_account, false),
+        ],
+        data: CollectionInstruction::Withdraw.try_to_vec().unwrap(),
+    }
+}
+
 impl CreateCollectionAccountArgs {
     const MAX_TITLE_LENGTH: usize = 32;
 

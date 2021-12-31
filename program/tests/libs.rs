@@ -7,6 +7,7 @@ use collection::instruction::{
     include_token,
     light_up_stars_hundred,
     close_account,
+    withdraw,
 };
 use collection::state::{CollectionAccountData, AccountType};
 use collection::utils::{get_index_account, get_treasury_account};
@@ -175,6 +176,20 @@ async fn test_light_up_stars_hundred() {
     assert_eq!(account_data.stars, 100);
     let balance = context.banks_client.get_balance(treasury_account).await.expect("get_balance");
     assert_eq!(balance, sol_to_lamports(0.01));
+
+    let ix = light_up_stars_hundred(
+        program_id,
+        collection_keypair.pubkey(),
+        payer_pubkey,
+        treasury_account,
+    );
+    let mut transaction = Transaction::new_with_payer(
+        &[ix],
+        Some(&context.payer.pubkey()),
+    );
+    transaction.sign(&[&context.payer], context.last_blockhash);
+    context.banks_client.process_transaction(transaction).await.unwrap();
+
 }
 
 #[tokio::test]

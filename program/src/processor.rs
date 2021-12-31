@@ -246,10 +246,18 @@ pub fn process_withdraw(
 ) -> ProgramResult {
     assert_program_id(program_id)?;
     let account_info_iter = &mut accounts.iter();
-    let source_account_info = next_account_info(account_info_iter)?;
+    //let source_account_info = next_account_info(account_info_iter)?;
     let treasury_account_info = next_account_info(account_info_iter)?;
-    let destination_account_info = next_account_info(account_info_iter)?;
+    let recipient_account_info = next_account_info(account_info_iter)?;
 
+    assert_treasury_account(treasury_account_info)?;
+    let lamports = treasury_account_info.lamports();
+    if lamports == 0 {
+        return Err(CollectionError::InsufficientFunds.into());
+    }
+    let recipient_starting_lamports = recipient_account_info.lamports();
+    **recipient_account_info.lamports.borrow_mut() = recipient_starting_lamports.checked_add(treasury_account_info.lamports()).unwrap();
+    **treasury_account_info.lamports.borrow_mut() = 0;
     Ok(())
 }
 
@@ -268,6 +276,7 @@ pub fn process_close_account(
             return Err(CollectionError::InvalidAccountType.into());
         }, 
         AccountType::CollectionAccount => {
+            msg!("close collection account: {}", account_info.key.to_string());
             let collection_data = CollectionAccountData::try_from_slice_unchecked(&account_info.data.borrow_mut())?;
             if collection_data.authority != *authority_account_info.key 
                 || !authority_account_info.is_signer {

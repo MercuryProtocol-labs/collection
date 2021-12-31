@@ -52,6 +52,10 @@ pub enum CollectionError {
     /// Invalid account type
     #[error("Invalid account type")]
     InvalidAccountType,
+
+    /// Insufficient funds
+    #[error("Insufficient funds")]
+    InsufficientFunds,
 }
 
 impl PrintProgramError for CollectionError {
