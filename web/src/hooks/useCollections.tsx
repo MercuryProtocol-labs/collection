@@ -46,7 +46,10 @@ export const useMyCollections = () => {
 
   useEffect(() => {
     (async () => {
-      if (!connection || !wallet.publicKey) return;
+      if (!connection || !wallet.publicKey) {
+        setIsLoading(false);
+        return;
+      }
 
       try {
         setIsLoading(true);

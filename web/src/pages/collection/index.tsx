@@ -32,10 +32,18 @@ export default () => {
   const [collection, setCollection] = useState<(CollectionAccountData & { pubkey: PublicKey }) | null>(null);
   const [tokenAddress, setTokenAddress] = useState<string>(); // NFT mint address
   const [hasAuthority, setHasAuthority] = useState(false);
-  const [starLoading, setStarLoading] = useState(false);
+  const [starLoading, setStarLoading] = useState({
+    once: false,
+    hundred: false,
+    thousand: false,
+  });
 
   const { isLoading, list } = useMyNFTs();
   console.log('list: ', list);
+  console.log(
+    'myNFTs: ',
+    list?.map((l) => l.data.mint),
+  );
 
   const [nfts, setNfts] = useState<any[]>([]);
 
@@ -111,6 +119,11 @@ export default () => {
   async function getNFTs() {
     try {
       const nfts = await getCollectionNFTs(connection, new PublicKey(id));
+      console.log('nft: ', nfts);
+      console.log(
+        'nfts: ',
+        nfts.map((n) => new PublicKey(n.mint).toString()),
+      );
 
       setNfts(nfts);
     } catch (error: any) {
@@ -127,15 +140,22 @@ export default () => {
       return message.error('wallet not connected');
     }
 
+    const key = type === CollectionInstructionType.LightUpStarsHundred ? 'hundred' : 'thousand';
     try {
-      setStarLoading(true);
+      setStarLoading({
+        ...starLoading,
+        [key]: true,
+      });
       const hash = await starMultiple(connection, wallet.publicKey, collection.pubkey, type, wallet.signTransaction);
       message.success(hash);
       location.reload();
     } catch (error) {
       console.error(error);
     }
-    setStarLoading(false);
+    setStarLoading({
+      ...starLoading,
+      [key]: false,
+    });
   }
 
   async function handleCloseAccount() {
@@ -170,7 +190,10 @@ export default () => {
     }
 
     try {
-      setStarLoading(true);
+      setStarLoading({
+        ...starLoading,
+        once: true,
+      });
 
       const hash = await starOnce(connection, wallet.publicKey, collection?.pubkey, wallet.signTransaction);
 
@@ -179,7 +202,32 @@ export default () => {
     } catch (error) {
       console.error(error);
     }
-    setStarLoading(false);
+    setStarLoading({
+      ...starLoading,
+      once: false,
+    });
+  }
+
+  function renderOptions(item: any) {
+    const included = nfts.some((nft) => {
+      return item.data.mint === new PublicKey(nft.mint).toString();
+    });
+
+    return (
+      <Option key={item.pubkey.toString()} value={item.data.mint} disabled={included}>
+        <span
+          style={{
+            display: 'inline-block',
+            width: '25px',
+            height: '25px',
+            marginRight: '12px',
+          }}
+        >
+          <ArtContent key={item.data.data.mint} uri={item.data.data.uri}></ArtContent>
+        </span>
+        <span>{item.data.data.name}</span>
+      </Option>
+    );
   }
 
   return (
@@ -190,7 +238,7 @@ export default () => {
         <Row gutter={GUTTER} className="home-info-row">
           <Col xs={24}>
             <Button
-              loading={starLoading}
+              loading={starLoading.once}
               size="large"
               block
               type="primary"
@@ -208,9 +256,9 @@ export default () => {
               type="primary"
               icon={<LikeOutlined />}
               onClick={() => handleStarsMultiple(CollectionInstructionType.LightUpStarsHundred)}
-              loading={starLoading}
+              loading={starLoading.hundred}
             >
-              +100 (0.01 sol)
+              +100 (0.01 SOL)
             </Button>
           </Col>
           <Col xs={12}>
@@ -219,10 +267,10 @@ export default () => {
               block
               type="primary"
               icon={<LikeOutlined />}
-              loading={starLoading}
+              loading={starLoading.thousand}
               onClick={() => handleStarsMultiple(CollectionInstructionType.LightUpStarsThousand)}
             >
-              +1000 (1 sol)
+              +1000 (1 SOL)
             </Button>
           </Col>
         </Row>
@@ -235,21 +283,7 @@ export default () => {
               {/* <Input size="large" placeholder="Token address" onChange={(e) => setTokenAddress(e.target.value)} /> */}
               <div>My NFTs:</div>
               <Select size="large" style={{ width: '100%' }} onChange={(val) => setTokenAddress(val as string)}>
-                {list?.map((item) => (
-                  <Option value={item.data.mint}>
-                    <span
-                      style={{
-                        display: 'inline-block',
-                        width: '25px',
-                        height: '25px',
-                        marginRight: '12px',
-                      }}
-                    >
-                      <ArtContent key={item.data.data.mint} uri={item.data.data.uri}></ArtContent>
-                    </span>
-                    <span>{item.data.data.name}</span>
-                  </Option>
-                ))}
+                {list?.map((item) => renderOptions(item))}
               </Select>
 
               <Button size="large" type="primary" block onClick={addNFT} style={{ marginTop: '24px' }}>
