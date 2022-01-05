@@ -1,5 +1,5 @@
 import { Link } from 'umi';
-import { CollectionAccountData } from '@/models';
+import { CollectionAccountData } from '@boling/collection';
 import { PublicKey } from '@solana/web3.js';
 import styles from './index.less';
 import { symbol } from 'prop-types';

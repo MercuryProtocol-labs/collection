@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { getAllConnection, getMyConnections, getTreasuryBalance } from '@/actions';
+import { getAllConnection, getMyConnections } from '@boling/collection';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
-import { CollectionAccountData } from '@/models';
+import { CollectionAccountData } from '@boling/collection';
 import BN from 'bn.js';
 import { PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
+import { getTreasuryBalance } from '@boling/collection';
 
 export const useCollections = () => {
   const { connection } = useConnection();
@@ -50,7 +51,7 @@ export const useMyCollections = () => {
       try {
         setIsLoading(true);
 
-        const _collections = await getMyConnections(connection, wallet);
+        const _collections = await getMyConnections(connection, wallet.publicKey);
 
         setCollections(_collections);
         setIsLoading(false);

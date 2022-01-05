@@ -3,9 +3,9 @@ import { message } from 'antd';
 import { LikeOutlined } from '@ant-design/icons';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { PublicKey } from '@solana/web3.js';
-import { CollectionAccountData } from '@/models';
+import { CollectionAccountData } from '@boling/collection';
 import { LinkAddress } from '@/components/LinkAddress';
-import { starOnce } from '@/actions';
+import { starOnce } from '@boling/collection';
 import classnames from 'classnames';
 import styles from './index.less';
 
@@ -25,9 +25,12 @@ export default ({ data, block }: { data: CollectionAccountData & { pubkey: Publi
   }
 
   async function handleStar() {
-    console.log('handle star');
+    if (!wallet?.publicKey || !wallet.signTransaction) {
+      return message.error('wallet not connected');
+    }
+
     try {
-      const hash = await starOnce(connection, wallet, pubkey);
+      const hash = await starOnce(connection, wallet.publicKey, pubkey, wallet.signTransaction);
       message.success(hash);
     } catch (error) {
       console.error(error);

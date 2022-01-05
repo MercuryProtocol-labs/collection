@@ -4,7 +4,7 @@ import { PublicKey } from '@solana/web3.js';
 import { useConnection } from '@solana/wallet-adapter-react';
 import { getMetadata } from '@/actions';
 import { useUriToArt } from '@/hooks';
-import { CollectionIndexAccountData } from '@/models';
+import { CollectionIndexAccountData } from '@boling/collection';
 import styles from './index.less';
 
 // only image

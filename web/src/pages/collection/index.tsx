@@ -3,13 +3,19 @@ import { useParams, useHistory } from 'umi';
 import { Button, Select, Input, message, Row, Col } from 'antd';
 import { LikeOutlined } from '@ant-design/icons';
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
-import { addNFTToCollection, decodeCollectionAccountData, getCollectionNFTs } from '@/actions';
-import { CollectionAccountData, CollectionInstructionType } from '@/models';
+import {
+  addNFTToCollection,
+  parseCollectionAccountData,
+  getCollectionNFTs,
+  starOnce,
+  starMultiple,
+  closeAccount,
+} from '@boling/collection';
+import { CollectionAccountData, CollectionInstructionType } from '@boling/collection';
 import { PublicKey } from '@solana/web3.js';
 import CollectionItem from '@/components/CollectionItem';
 import NftItem from '@/components/ArtItem';
 import { GUTTER } from '@/pages/home';
-import { starOnce, starMultiple, closeAccount } from '@/actions';
 import { useMyNFTs } from '@/hooks';
 import { ArtContent } from '@/components/ArtItem';
 import { Token, TOKEN_PROGRAM_ID, ASSOCIATED_TOKEN_PROGRAM_ID, MintLayout } from '@solana/spl-token';
@@ -47,7 +53,7 @@ export default () => {
     const account = await connection.getAccountInfo(pubkey);
     if (!account) return;
 
-    const parsedData = decodeCollectionAccountData({ pubkey, account });
+    const parsedData = parseCollectionAccountData({ pubkey, account });
 
     setCollection(parsedData);
   }
@@ -71,6 +77,11 @@ export default () => {
         message.error('Connect wallet please');
         return;
       }
+      if (!wallet?.signTransaction) {
+        message.error('Connect wallet please');
+
+        return;
+      }
       const mint = new PublicKey(tokenAddress);
 
       const [tokenAccountOfMint] = await PublicKey.findProgramAddress(
@@ -81,7 +92,14 @@ export default () => {
       // const authority = new PublicKey('13K1aKvDBij4RA5Abe6rBLnCqMdHcGA4P1ygESsA5cwr');
       // const tokenAccountOfMint = new PublicKey('9zoR867KwGAsHjL9Lmc3Z8usgkJDnfYXixYdC17z1ZBG');
 
-      const hash = await addNFTToCollection(connection, wallet, new PublicKey(id), mint, tokenAccountOfMint);
+      const hash = await addNFTToCollection(
+        connection,
+        wallet.publicKey,
+        new PublicKey(id),
+        mint,
+        tokenAccountOfMint,
+        wallet.signTransaction,
+      );
       console.log('hash: ', hash);
       location.reload();
     } catch (error: any) {
@@ -105,10 +123,13 @@ export default () => {
       return message.error('collection account error');
     }
 
-    console.log('insType: ', type);
+    if (!wallet?.publicKey || !wallet.signTransaction) {
+      return message.error('wallet not connected');
+    }
+
     try {
       setStarLoading(true);
-      const hash = await starMultiple(connection, wallet, collection.pubkey, type);
+      const hash = await starMultiple(connection, wallet.publicKey, collection.pubkey, type, wallet.signTransaction);
       message.success(hash);
       location.reload();
     } catch (error) {
@@ -121,9 +142,18 @@ export default () => {
     if (!collection) {
       return message.error('collection account error');
     }
+    if (!wallet?.publicKey || !wallet.signTransaction) {
+      return message.error('wallet not connected');
+    }
 
     try {
-      const hash = await closeAccount(connection, wallet, collection?.pubkey, collection.account_type);
+      const hash = await closeAccount(
+        connection,
+        wallet.publicKey,
+        collection?.pubkey,
+        collection.account_type,
+        wallet.signTransaction,
+      );
       message.success(hash);
       history.go(-1);
     } catch (error) {
@@ -135,11 +165,14 @@ export default () => {
     if (!collection) {
       return message.error('collection account error');
     }
+    if (!wallet?.publicKey || !wallet.signTransaction) {
+      return message.error('wallet not connected');
+    }
 
     try {
       setStarLoading(true);
 
-      const hash = await starOnce(connection, wallet, collection?.pubkey);
+      const hash = await starOnce(connection, wallet.publicKey, collection?.pubkey, wallet.signTransaction);
 
       message.success(hash);
       location.reload();
@@ -164,7 +197,7 @@ export default () => {
               onClick={handleStartOnce}
               icon={<LikeOutlined />}
             >
-              +1 (only fee)
+              +1 (free)
             </Button>
           </Col>
 

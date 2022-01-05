@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { PageHeader, Card, Typography, Input, Space, Select, Button, message } from 'antd';
 import { useHistory } from 'umi';
-import { CreateCollectionArgs } from '@/models';
-import { createCollection } from '@/actions';
+// import { CreateCollectionArgs } from '@boling/collection';
+import { createCollection, CreateCollectionArgs } from '@boling/collection';
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 import styles from './index.less';
 
@@ -49,7 +49,15 @@ export default () => {
       return message.error('Check Form data');
     }
 
-    const { hash, pubkey } = await createCollection(connection, wallet, new CreateCollectionArgs(data));
+    if (!wallet?.publicKey) return message.error('wallet not connected');
+    if (!wallet?.signTransaction) return message.error('wallet not connected');
+
+    const { hash, pubkey } = await createCollection(
+      connection,
+      wallet.publicKey,
+      new CreateCollectionArgs(data),
+      wallet.signTransaction,
+    );
     console.log('hash: ', hash);
     message.success(hash);
     history.push(`/collection/${pubkey.toString()}`);
