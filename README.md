@@ -2,7 +2,7 @@
 
 A collection protocol for the Token program on the Solana blockchain.
 
-Full documentation is available at https://xxx.com
+Full documentation is available at https://xxx
 
 Web3 bindings are available in the `./jssdk` directory.
 
@@ -18,4 +18,4 @@ Please note that only the lending program deployed to devnet is currently operat
 
 ### Documentation
 
-- [Client library docs](https://xxx.com/)
+- [Client library docs](https://xxx/)
