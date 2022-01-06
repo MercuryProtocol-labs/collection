@@ -1,16 +1,14 @@
 import { useState, useEffect } from 'react';
-import { getAllConnection, getMyConnections } from '@boling/collection';
+import { getCollections, getAccountCollections } from '@boling/collection';
 import { useConnection, useWallet } from '@solana/wallet-adapter-react';
 import { CollectionAccountData } from '@boling/collection';
 import BN from 'bn.js';
-import { PublicKey, LAMPORTS_PER_SOL } from '@solana/web3.js';
 import { getTreasuryBalance } from '@boling/collection';
+import { PublicKey } from '@solana/web3.js';
 
 export const useCollections = () => {
   const { connection } = useConnection();
-  const [collections, setCollections] = useState<(CollectionAccountData & { pubkey: PublicKey })[] | undefined>(
-    undefined,
-  );
+  const [collections, setCollections] = useState<CollectionAccountData[] | undefined>(undefined);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -20,7 +18,7 @@ export const useCollections = () => {
       try {
         setIsLoading(true);
 
-        const _collections = await getAllConnection(connection);
+        const _collections = await getCollections(connection);
         const sortedList = _collections.sort((a, b) => {
           return b.stars.toNumber() - a.stars.toNumber();
         });
@@ -39,9 +37,7 @@ export const useCollections = () => {
 export const useMyCollections = () => {
   const { connection } = useConnection();
   const wallet = useWallet();
-  const [collections, setCollections] = useState<(CollectionAccountData & { pubkey: PublicKey })[] | undefined>(
-    undefined,
-  );
+  const [collections, setCollections] = useState<(CollectionAccountData & { pubkey: PublicKey })[]>();
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -54,7 +50,7 @@ export const useMyCollections = () => {
       try {
         setIsLoading(true);
 
-        const _collections = await getMyConnections(connection, wallet.publicKey);
+        const _collections = await getAccountCollections(connection, wallet.publicKey);
 
         setCollections(_collections);
         setIsLoading(false);
@@ -108,8 +104,8 @@ export const useTreasuryBalance = () => {
     (async () => {
       const val = await getTreasuryBalance(connection);
       setBalance({
-        amount: val,
-        uiAmount: val / LAMPORTS_PER_SOL,
+        amount: val.balance,
+        uiAmount: val.uiBalance,
       });
     })();
   }, [connection]);

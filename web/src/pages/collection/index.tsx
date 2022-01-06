@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useHistory } from 'umi';
-import { Button, Select, Input, message, Row, Col } from 'antd';
+import { Button, Select, message, Row, Col } from 'antd';
 import { LikeOutlined } from '@ant-design/icons';
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 import {
@@ -39,11 +39,6 @@ export default () => {
   });
 
   const { isLoading, list } = useMyNFTs();
-  console.log('list: ', list);
-  console.log(
-    'myNFTs: ',
-    list?.map((l) => l.data.mint),
-  );
 
   const [nfts, setNfts] = useState<any[]>([]);
 
@@ -61,7 +56,12 @@ export default () => {
     const account = await connection.getAccountInfo(pubkey);
     if (!account) return;
 
-    const parsedData = parseCollectionAccountData({ pubkey, account });
+    const parsedData = parseCollectionAccountData({
+      account,
+      pubkey,
+    });
+
+    console.log(parsedData);
 
     setCollection(parsedData);
   }
@@ -131,7 +131,9 @@ export default () => {
     }
   }
 
-  async function handleStarsMultiple(type: CollectionInstructionType) {
+  async function handleStarsMultiple(
+    type: CollectionInstructionType.LightUpStarsHundred | CollectionInstructionType.LightUpStarsThousand,
+  ) {
     if (!collection) {
       return message.error('collection account error');
     }
@@ -167,13 +169,7 @@ export default () => {
     }
 
     try {
-      const hash = await closeAccount(
-        connection,
-        wallet.publicKey,
-        collection?.pubkey,
-        collection.account_type,
-        wallet.signTransaction,
-      );
+      const hash = await closeAccount(connection, wallet.publicKey, collection?.pubkey, wallet.signTransaction);
       message.success(hash);
       history.go(-1);
     } catch (error) {

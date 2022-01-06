@@ -1,7 +1,6 @@
 import { useState } from 'react';
-import { PageHeader, Card, Typography, Input, Space, Select, Button, message } from 'antd';
+import { Typography, Input, Space, Select, Button, message } from 'antd';
 import { useHistory } from 'umi';
-// import { CreateCollectionArgs } from '@boling/collection';
 import { createCollection, CreateCollectionArgs } from '@boling/collection';
 import { useWallet, useConnection } from '@solana/wallet-adapter-react';
 import styles from './index.less';
