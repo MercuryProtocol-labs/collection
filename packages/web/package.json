@@ -22,6 +22,7 @@
   },
   "dependencies": {
     "@ant-design/pro-layout": "^6.5.0",
+    "@mercury-protocol/collection-js": "^0.1.0",
     "@metaplex-foundation/mpl-token-metadata": "0.0.2",
     "@metaplex/js": "4.6.0",
     "@solana/spl-token-registry": "^0.2.1141",
