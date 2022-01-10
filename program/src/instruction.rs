@@ -95,7 +95,7 @@ pub enum CollectionInstruction {
     Withdraw,
 }
 
-/// create collection account instruction
+/// Creates a `CreateCollectionAccount` instruction.
 pub fn create_collection_account(
     program_id: Pubkey,
     collection_account: Pubkey,
@@ -114,7 +114,7 @@ pub fn create_collection_account(
     }
 }
 
-
+/// Creates an `IncludeToken` instruction.
 pub fn include_token(
     program_id: Pubkey,
     collection_account: Pubkey,
@@ -140,6 +140,7 @@ pub fn include_token(
     }
 }
 
+/// Creates a `LightUpStarsOnce` instruction.
 pub fn light_up_stars_once(
     program_id: Pubkey,
     collection_account: Pubkey,
@@ -153,6 +154,7 @@ pub fn light_up_stars_once(
     }
 }
 
+/// Creates a `LightUpStarsHundred` instruction.
 pub fn light_up_stars_hundred(
     program_id: Pubkey,
     collection_account: Pubkey,
@@ -171,6 +173,7 @@ pub fn light_up_stars_hundred(
     }
 }
 
+/// Creates a `CloseAccount` instruction.
 pub fn close_account(
     program_id: Pubkey,
     state_account: Pubkey,
@@ -189,6 +192,7 @@ pub fn close_account(
     }
 }
 
+/// Creates a `Withdraw` instruction.
 pub fn withdraw(
     program_id: Pubkey,
     treasury_manager_account: Pubkey,
