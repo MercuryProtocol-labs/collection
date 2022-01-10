@@ -23,15 +23,25 @@ $ npm install --save @mercury-protocol/collection-js
 ### Javascript
 
 ```js
-const {getTreasuryBalance} = require('@mercury-protocol/collection-js');
-console.log(getTreasuryBalance());
+const {Connection, clusterApiUrl} = require('@solana/web3.js');
+const {getCollections} = require('@mercury-protocol/collection-js');
+
+const connection = new Connection(clusterApiUrl('devnet'));
+getCollections(connection).then(res => {
+  console.log(res);
+});
 ```
 
 ### ES6
 
 ```js
-import {getTreasuryBalance} from '@mercury-protocol/collection-js';
-console.log(getTreasuryBalance());
+import {Connection, clusterApiUrl} from '@solana/web3.js';
+import {getCollections} from '@mercury-protocol/collection-js';
+
+const connection = new Connection(clusterApiUrl('devnet'));
+getCollections(connection).then(res => {
+  console.log(res);
+});
 ```
 
 ## Examples
