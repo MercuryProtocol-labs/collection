@@ -3,7 +3,7 @@
   "scripts": {
     "dev": "umi dev",
     "build": "umi build",
-    "deploy": "yarn build && gh-pages -d dist",
+    "deploy": "yarn build && gh-pages -a -d dist",
     "postinstall": "umi generate tmp",
     "prettier": "prettier --write '**/*.{js,jsx,tsx,ts,less,md,json}'",
     "test": "umi-test",
