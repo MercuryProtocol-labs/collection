@@ -2,7 +2,7 @@
 
 This is the Collection Javascript API.
 
-[Latest API Documentation](https://github.com/MercuryProtocol-labs/collection)
+[Latest API Documentation](https://mercuryprotocol-labs.github.io/collection/doc/index.html)
 
 ## Installation
 
